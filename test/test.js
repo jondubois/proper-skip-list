@@ -44,7 +44,7 @@ describe('ProperSkipList tests', function () {
       let currentNode = skipList.head.nodes[0].next;
       while (currentNode && currentNode.next) {
         assert.equal(currentNode.group.value === `value${currentNode.group.key}`, true);
-        assert.equal(currentNode.group.key > currentNode.prev.group.key, true);
+        assert.equal(currentNode.group.key > currentNode.prev.group.key || currentNode.prev.group.key === undefined, true);
         currentNode = currentNode.next;
       }
     });
@@ -190,9 +190,9 @@ describe('ProperSkipList tests', function () {
         skipList = new ProperSkipList();
       });
 
-      it('should return -Infinity when minKey is called', async function () {
+      it('should return undefined when minKey is called', async function () {
         result = skipList.minKey();
-        assert.equal(result === -Infinity, true);
+        assert.equal(result === undefined, true);
       });
 
       it('should return undefined when minValue is called', async function () {
@@ -227,9 +227,9 @@ describe('ProperSkipList tests', function () {
         skipList = new ProperSkipList();
       });
 
-      it('should return Infinity when maxKey is called', async function () {
+      it('should return undefined when maxKey is called', async function () {
         result = skipList.maxKey();
-        assert.equal(result === Infinity, true);
+        assert.equal(result === undefined, true);
       });
 
       it('should return undefined when maxValue is called', async function () {

@@ -13,17 +13,16 @@ class SkipList {
     };
     this.head = {
       isHead: true,
-      key: -Infinity,
+      key: undefined,
       value: undefined,
       nodes: [headNode]
     };
     this.tail = {
       isTail: true,
-      key: Infinity,
+      key: undefined,
       value: undefined,
       nodes: [tailNode]
     };
-
     headNode.next = tailNode;
     tailNode.prev = headNode;
     headNode.group = this.head;
@@ -31,7 +30,7 @@ class SkipList {
   }
 
   insert(key, value) {
-    let {matchingNode, lastVisitedNode, searchPath} = this.search(key);
+    let {matchingNode, prevNode, searchPath} = this._search(key);
     if (matchingNode) {
       matchingNode.group.value = value;
       return;
@@ -39,8 +38,8 @@ class SkipList {
 
     // Insert the entry.
     let newNode = {
-      prev: lastVisitedNode,
-      next: lastVisitedNode.next
+      prev: prevNode,
+      next: prevNode.next
     };
     let newGroup = {
       key,
@@ -48,7 +47,7 @@ class SkipList {
       nodes: [newNode]
     };
     newNode.group = newGroup;
-    lastVisitedNode.next = newNode;
+    prevNode.next = newNode;
     newNode.next.prev = newNode;
 
     // Stack up the entry for fast search.
@@ -83,111 +82,176 @@ class SkipList {
   }
 
   find(key) {
-    let matchingNode = this.findNode(key);
-    return matchingNode === undefined ? undefined : matchingNode.group.value;
+    let {matchingNode} = this._search(key);
+    return matchingNode == null ? undefined : matchingNode.group.value;
   }
 
-  minNode() {
-    let minNode = this.head.nodes[0].next;
-    if (minNode.group.isTail) {
-      minNode = this.head.nodes[0];
-    }
-    return minNode;
+  _createIteratorFromMin() {
+    let currentNode = this.head.nodes[0];
+    return {
+      next: () => {
+        currentNode = currentNode.next;
+        let currentGroup = currentNode.group;
+        return {
+          key: currentGroup.key,
+          value: currentGroup.value,
+          done: currentGroup.isTail
+        };
+      }
+    };
   }
 
-  maxNode() {
-    let maxNode = this.tail.nodes[0].prev;
-    if (maxNode.group.isHead) {
-      maxNode = this.tail.nodes[0];
-    }
-    return maxNode;
+  _createIteratorFromMax() {
+    let currentNode = this.tail.nodes[0];
+    return {
+      next: () => {
+        currentNode = currentNode.prev;
+        let currentGroup = currentNode.group;
+        return {
+          key: currentGroup.key,
+          value: currentGroup.value,
+          done: currentGroup.isHead
+        };
+      }
+    };
+  }
+
+  findEntriesFromMin() {
+    return {
+      [Symbol.iterator]: () => {
+        let iterator = this._createIteratorFromMin();
+        return {
+          next: () => {
+            let item = iterator.next();
+            return {
+              value: [item.key, item.value],
+              done: item.done
+            };
+          }
+        };
+      }
+    };
+  }
+
+  findEntriesFromMax() {
+    return {
+      [Symbol.iterator]: () => {
+        let iterator = this._createIteratorFromMax();
+        return {
+          next: () => {
+            let item = iterator.next();
+            return {
+              value: [item.key, item.value],
+              done: item.done
+            };
+          }
+        };
+      }
+    };
+  }
+
+  minEntry() {
+    let minIterator = this._createIteratorFromMin();
+    let item = minIterator.next();
+    return [item.key, item.value];
+  }
+
+  maxEntry() {
+    let minIterator = this._createIteratorFromMax();
+    let item = minIterator.next();
+    return [item.key, item.value];
   }
 
   minKey() {
-    return this.minNode().group.key;
+    return this.minEntry()[0];
   }
 
   maxKey() {
-    return this.maxNode().group.key;
+    return this.maxEntry()[0];
   }
 
   minValue() {
-    return this.minNode().group.value;
+    return this.minEntry()[1];
   }
 
   maxValue() {
-    return this.maxNode().group.value;
+    return this.maxEntry()[1];
+  }
+
+  extract(key) {
+    let {matchingNode} = this._search(key);
+    if (matchingNode) {
+      let prevNode = matchingNode.prev;
+      prevNode.next = matchingNode.next;
+      prevNode.next.prev = prevNode;
+    }
+    return matchingNode == null ? undefined : matchingNode.group.value;
   }
 
   delete(key) {
     return this.extract(key) !== undefined;
   }
 
-  findNode(key) {
-    return this.search(key).matchingNode;
-  }
-
-  findSegment(key, countBefore, countAfter) {
-    let segmentNodes = this._findSegmentNodes(key, countBefore, countAfter);
+  findEntries(fromKey) {
+    let {matchingNode, prevNode} = this._search(fromKey);
     return {
-      before: segmentNodes.before.map((node) => node.group.value),
-      match: segmentNodes.match.group.value,
-      after: segmentNodes.after.map((node) => node.group.value)
+      matchingValue: matchingNode == null ? undefined : matchingNode.group.value,
+      asc: {
+        [Symbol.iterator]: () => {
+          let currentNode = prevNode;
+          return {
+            next: () => {
+              currentNode = currentNode.next;
+              let currentGroup = currentNode.group;
+              return {
+                value: [currentGroup.key, currentGroup.value],
+                done: currentGroup.isTail
+              };
+            }
+          };
+        }
+      },
+      desc: {
+        [Symbol.iterator]: () => {
+          let currentNode = prevNode.next;
+          return {
+            next: () => {
+              currentNode = currentNode.prev;
+              let currentGroup = currentNode.group;
+              return {
+                value: [currentGroup.key, currentGroup.value],
+                done: currentGroup.isTail
+              };
+            }
+          };
+        }
+      }
     };
   }
 
-  deleteSegment(key, countBefore, countAfter) {
-    let segmentNodes = this._findSegmentNodes(key, countBefore, countAfter);
-    let firstNode = segmentNodes.before[segmentNodes.before.length - 1];
-    let lastNode = segmentNodes.after[segmentNodes.after.length - 1];
-    firstNode.prev.next = lastNode.next;
-    lastNode.next.prev = firstNode.prev;
-    return {
-      beforeCount: segmentNodes.before.length,
-      match: segmentNodes.match !== undefined,
-      after: segmentNodes.after.length
-    };
-  }
-
-  extract(key) {
-    let extractedNode = this.extractNode(key);
-    return extractedNode === undefined ? undefined : extractedNode.group.value;
-  }
-
-  extractNode(key) {
-    let {matchingNode} = this.search(key);
-    if (matchingNode) {
-      let prevNode = matchingNode.prev;
-      prevNode.next = matchingNode.next;
-      prevNode.next.prev = prevNode;
+  deleteSegment(fromKey, toKey, excludeFirst, excludeLast) {
+    let {prevNode: fromNode} = this._search(fromKey);
+    let {prevNode: toNode} = this._search(toKey);
+    let newStartNode = excludeFirst ? fromNode.next : fromNode;
+    let newEndNode = excludeLast ? toNode.next : toNode.next.next;
+    if (newEndNode == null) {
+      newEndNode = toNode.next;
     }
-    return matchingNode;
+    newStartNode.next = newEndNode;
+    newEndNode.prev = newStartNode;
   }
 
-  extractSegment(key, countBefore, countAfter) {
-    let segmentNodes = this._findSegmentNodes(key, countBefore, countAfter);
-    let firstNode = segmentNodes.before[segmentNodes.before.length - 1];
-    let lastNode = segmentNodes.after[segmentNodes.after.length - 1];
-    firstNode.prev.next = lastNode.next;
-    lastNode.next.prev = firstNode.prev;
-    return {
-      before: segmentNodes.before.map((node) => node.group.value),
-      match: segmentNodes.match.group.value,
-      after: segmentNodes.after.map((node) => node.group.value)
-    };
-  }
-
-  search(key) {
+  _search(key) {
     let searchPath = [];
     let layerIndex = this.head.nodes.length - 1;
     let currentNode = this.head.nodes[layerIndex];
-    let lastVisitedNode = currentNode;
+    let prevNode = currentNode;
     let goToNextLayer = false;
 
     while (true) {
       let currentNodeGroup = currentNode.group;
       if (key > currentNodeGroup.key || currentNodeGroup.isHead) {
-        lastVisitedNode = currentNode;
+        prevNode = currentNode;
         currentNode = currentNode.next;
         continue;
       }
@@ -196,39 +260,19 @@ class SkipList {
         let currentNodeGroupKeyType = typeof currentNodeGroup.key;
          if (keyType === currentNodeGroupKeyType) {
            let matchingNode = currentNodeGroup.nodes[0];
-           return {matchingNode, lastVisitedNode, searchPath};
+           return {matchingNode, prevNode: matchingNode.prev, searchPath};
          } else if (keyType !== 'number') {
-           lastVisitedNode = currentNode;
+           prevNode = currentNode;
            currentNode = currentNode.next;
            continue;
          }
       }
-      searchPath[layerIndex] = lastVisitedNode;
+      searchPath[layerIndex] = prevNode;
       if (--layerIndex < 0) {
-        return {matchingNode: undefined, lastVisitedNode, searchPath};
+        return {matchingNode: undefined, prevNode, searchPath};
       }
-      currentNode = lastVisitedNode.group.nodes[layerIndex];
+      currentNode = prevNode.group.nodes[layerIndex];
     }
-  }
-
-  _findSegmentNodes(key, countBefore, countAfter) {
-    let matchingNode = this.findNode(key);
-    let segment = {
-      before: [],
-      match: matchingNode,
-      after: []
-    };
-    let currentNode = matchingNode;
-    for (let i = 0; i < countBefore; i++) {
-      currentNode = currentNode.prev;
-      segment.before.push(currentNode);
-    }
-    currentNode = matchingNode;
-    for (let i = 0; i < countAfter; i++) {
-      currentNode = currentNode.next;
-      segment.after.push(currentNode);
-    }
-    return segment;
   }
 }
 
