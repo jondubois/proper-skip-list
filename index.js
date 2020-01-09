@@ -90,7 +90,7 @@ class SkipList {
 
   find(key) {
     let {matchingNode} = this._search(key);
-    return matchingNode == null ? undefined : matchingNode.group.value;
+    return matchingNode ? matchingNode.group.value : undefined;
   }
 
   _isAGreaterThanB(a, b) {
@@ -130,80 +130,22 @@ class SkipList {
     }
   }
 
-  _createIteratorFromMin() {
-    let currentNode = this.head.nodes[0];
-    return {
-      next: () => {
-        currentNode = currentNode.next;
-        let currentGroup = currentNode.group;
-        return {
-          key: currentGroup.key,
-          value: currentGroup.value,
-          done: currentGroup.isTail
-        };
-      }
-    };
-  }
-
-  _createIteratorFromMax() {
-    let currentNode = this.tail.nodes[0];
-    return {
-      next: () => {
-        currentNode = currentNode.prev;
-        let currentGroup = currentNode.group;
-        return {
-          key: currentGroup.key,
-          value: currentGroup.value,
-          done: currentGroup.isHead
-        };
-      }
-    };
-  }
-
   findEntriesFromMin() {
-    return {
-      [Symbol.iterator]: () => {
-        let iterator = this._createIteratorFromMin();
-        return {
-          next: () => {
-            let item = iterator.next();
-            return {
-              value: [item.key, item.value],
-              done: item.done
-            };
-          }
-        };
-      }
-    };
+    return this._createEntriesIteratorAsc(this.head.nodes[0].next);
   }
 
   findEntriesFromMax() {
-    return {
-      [Symbol.iterator]: () => {
-        let iterator = this._createIteratorFromMax();
-        return {
-          next: () => {
-            let item = iterator.next();
-            return {
-              value: [item.key, item.value],
-              done: item.done
-            };
-          }
-        };
-      }
-    };
+    return this._createEntriesIteratorDesc(this.tail.nodes[0].prev);
   }
 
   minEntry() {
-    let minIterator = this._createIteratorFromMin();
-    let item = minIterator.next();
-    return [item.key, item.value];
+    let [key, value] = this.findEntriesFromMin().next().value;
+    return [key, value];
   }
 
   maxEntry() {
-    let minIterator = this._createIteratorFromMax();
-    let item = minIterator.next();
-    return [item.key, item.value];
+    let [key, value] = this.findEntriesFromMax().next().value;
+    return [key, value];
   }
 
   minKey() {
@@ -232,7 +174,7 @@ class SkipList {
         prevNode.next.prev = prevNode;
       }
     }
-    return matchingNode == null ? undefined : matchingNode.group.value;
+    return matchingNode ? matchingNode.group.value : undefined;
   }
 
   delete(key) {
@@ -241,38 +183,17 @@ class SkipList {
 
   findEntries(fromKey) {
     let {matchingNode, prevNode} = this._search(fromKey);
+    if (matchingNode) {
+      return {
+        matchingValue: matchingNode.group.value,
+        asc: this._createEntriesIteratorAsc(matchingNode),
+        desc: this._createEntriesIteratorDesc(matchingNode)
+      };
+    }
     return {
-      matchingValue: matchingNode == null ? undefined : matchingNode.group.value,
-      asc: {
-        [Symbol.iterator]: () => {
-          let currentNode = prevNode;
-          return {
-            next: () => {
-              currentNode = currentNode.next;
-              let currentGroup = currentNode.group;
-              return {
-                value: [currentGroup.key, currentGroup.value],
-                done: currentGroup.isTail
-              };
-            }
-          };
-        }
-      },
-      desc: {
-        [Symbol.iterator]: () => {
-          let currentNode = prevNode.next;
-          return {
-            next: () => {
-              currentNode = currentNode.prev;
-              let currentGroup = currentNode.group;
-              return {
-                value: [currentGroup.key, currentGroup.value],
-                done: currentGroup.isTail
-              };
-            }
-          };
-        }
-      }
+      matchingValue: undefined,
+      asc: this._createEntriesIteratorAsc(prevNode.next),
+      desc: this._createEntriesIteratorDesc(prevNode)
     };
   }
 
@@ -281,11 +202,53 @@ class SkipList {
     let {prevNode: toNode} = this._search(toKey);
     let newStartNode = excludeFirst ? fromNode.next : fromNode;
     let newEndNode = excludeLast ? toNode.next : toNode.next.next;
-    if (newEndNode == null) {
+    if (!newEndNode) {
       newEndNode = toNode.next;
     }
     newStartNode.next = newEndNode;
     newEndNode.prev = newStartNode;
+  }
+
+  _createEntriesIteratorAsc(currentNode) {
+    let i = 0;
+    return {
+      next: function () {
+        let currentGroup = currentNode.group;
+        if (currentGroup.isTail) {
+          return {
+            value: [currentNode.key, currentNode.value, i],
+            done: true
+          }
+        }
+        currentNode = currentNode.next;
+        return {
+          value: [currentGroup.key, currentGroup.value, i++],
+          done: currentGroup.isTail
+        };
+      },
+      [Symbol.iterator]: function () { return this; }
+    };
+  }
+
+  _createEntriesIteratorDesc(currentNode) {
+    let i = 0;
+    return {
+      next: function () {
+        let currentGroup = currentNode.group;
+        if (currentGroup.isHead) {
+          return {
+            value: [currentNode.key, currentNode.value, i],
+            done: true
+          }
+        }
+        currentNode = currentNode.prev;
+        return {
+          value: [currentGroup.key, currentGroup.value, i++],
+          done: currentGroup.isHead
+        };
+      },
+      [Symbol.iterator]: function () { return this; }
+    };
   }
 }
 

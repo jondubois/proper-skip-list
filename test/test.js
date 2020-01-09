@@ -60,8 +60,8 @@ describe('ProperSkipList tests', function () {
       }
       let currentNode = skipList.head.nodes[0].next;
       while (currentNode && currentNode.next) {
-        assert(currentNode.group.value === `value${currentNode.group.key}`, true);
-        assert(currentNode.group.key > currentNode.prev.group.key || currentNode.prev.group.key === undefined, true);
+        assert(currentNode.group.value === `value${currentNode.group.key}`);
+        assert(currentNode.group.key > currentNode.prev.group.key || currentNode.prev.group.key === undefined);
         currentNode = currentNode.next;
       }
     });
@@ -87,7 +87,7 @@ describe('ProperSkipList tests', function () {
 
       let len = layers.length;
       for (let i = 1; i < len; i++) {
-        assert(layers[i].length <= layers[i - 1].length, true);
+        assert(layers[i].length <= layers[i - 1].length);
       }
     });
 
@@ -109,20 +109,20 @@ describe('ProperSkipList tests', function () {
         skipList.insert(`key${i}`, `value${i}`);
       }
       let currentNode = skipList.head.nodes[0].next;
-      assert(currentNode.group.key === 'key0', true);
-      assert(currentNode.group.value === 'value0', true);
+      assert(currentNode.group.key === 'key0');
+      assert(currentNode.group.value === 'value0');
       currentNode = currentNode.next;
-      assert(currentNode.group.key === 'key1', true);
-      assert(currentNode.group.value === 'value1', true);
+      assert(currentNode.group.key === 'key1');
+      assert(currentNode.group.value === 'value1');
       currentNode = currentNode.next;
-      assert(currentNode.group.key === 'key2', true);
-      assert(currentNode.group.value === 'value2', true);
+      assert(currentNode.group.key === 'key2');
+      assert(currentNode.group.value === 'value2');
       currentNode = currentNode.next;
-      assert(currentNode.group.key === 'key3', true);
-      assert(currentNode.group.value === 'value3', true);
+      assert(currentNode.group.key === 'key3');
+      assert(currentNode.group.value === 'value3');
       currentNode = currentNode.next;
-      assert(currentNode.group.key === 'key4', true);
-      assert(currentNode.group.value === 'value4', true);
+      assert(currentNode.group.key === 'key4');
+      assert(currentNode.group.value === 'value4');
     });
 
     it('should support mixing string and numeric keys', async function () {
@@ -133,23 +133,23 @@ describe('ProperSkipList tests', function () {
         skipList.insert(i, `number${i}`);
       }
       let currentNode = skipList.head.nodes[0].next;
-      assert(currentNode.group.key === 0, true);
-      assert(currentNode.group.value === 'number0', true);
+      assert(currentNode.group.key === 0);
+      assert(currentNode.group.value === 'number0');
       currentNode = currentNode.next;
-      assert(currentNode.group.key === 1, true);
-      assert(currentNode.group.value === 'number1', true);
+      assert(currentNode.group.key === 1);
+      assert(currentNode.group.value === 'number1');
       currentNode = currentNode.next;
-      assert(currentNode.group.key === 2, true);
-      assert(currentNode.group.value === 'number2', true);
+      assert(currentNode.group.key === 2);
+      assert(currentNode.group.value === 'number2');
       currentNode = currentNode.next;
-      assert(currentNode.group.key === 'key0', true);
-      assert(currentNode.group.value === 'string0', true);
+      assert(currentNode.group.key === 'key0');
+      assert(currentNode.group.value === 'string0');
       currentNode = currentNode.next;
-      assert(currentNode.group.key === 'key1', true);
-      assert(currentNode.group.value === 'string1', true);
+      assert(currentNode.group.key === 'key1');
+      assert(currentNode.group.value === 'string1');
       currentNode = currentNode.next;
-      assert(currentNode.group.key === 'key2', true);
-      assert(currentNode.group.value === 'string2', true);
+      assert(currentNode.group.key === 'key2');
+      assert(currentNode.group.value === 'string2');
     });
 
     it('should support using null and undefined as keys', async function () {
@@ -157,8 +157,8 @@ describe('ProperSkipList tests', function () {
       skipList.insert(undefined, 'value2');
       let layers = getLayerEntries(skipList);
       let bottomLayer = layers[0];
-      assert(bottomLayer[1][0] === undefined, true);
-      assert(bottomLayer[2][0] === null, true);
+      assert(bottomLayer[1][0] === undefined);
+      assert(bottomLayer[2][0] === null);
     });
 
     it('should support mixing null, undefined, strings and numbers as keys', async function () {
@@ -173,14 +173,14 @@ describe('ProperSkipList tests', function () {
 
       let layers = getLayerEntries(skipList);
       let bottomLayer = layers[0];
-      assert(bottomLayer[1][0] === undefined, true);
-      assert(bottomLayer[2][0] === null, true);
-      assert(bottomLayer[3][0] === 3, true);
-      assert(bottomLayer[4][0] === 10, true);
-      assert(bottomLayer[5][0] === '3', true);
-      assert(bottomLayer[6][0] === '4', true);
-      assert(bottomLayer[7][0] === 'hello', true);
-      assert(bottomLayer[8][0] === 'test', true);
+      assert(bottomLayer[1][0] === undefined);
+      assert(bottomLayer[2][0] === null);
+      assert(bottomLayer[3][0] === 3);
+      assert(bottomLayer[4][0] === 10);
+      assert(bottomLayer[5][0] === '3');
+      assert(bottomLayer[6][0] === '4');
+      assert(bottomLayer[7][0] === 'hello');
+      assert(bottomLayer[8][0] === 'test');
 
     });
   });
@@ -198,14 +198,14 @@ describe('ProperSkipList tests', function () {
 
       it('should be able to find an entry which was previously inserted', async function () {
         result = skipList.find(900);
-        assert(result === 'value900', true);
+        assert(result === 'value900');
         result = skipList.find('foo');
-        assert(result === 'bar', true);
+        assert(result === 'bar');
       });
 
       it('should return undefined if value is not found', async function () {
         result = skipList.find(1111);
-        assert(result === undefined, true);
+        assert(result === undefined);
       });
     });
 
@@ -216,7 +216,7 @@ describe('ProperSkipList tests', function () {
 
       it('should return undefined', async function () {
         result = skipList.find(900);
-        assert(result === undefined, true);
+        assert(result === undefined);
       });
     });
   });
@@ -234,7 +234,7 @@ describe('ProperSkipList tests', function () {
       let layers = getLayerKeys(skipList);
       for (let layer of layers) {
         for (let key of layer) {
-          assert(key != 10, true);
+          assert(key != 10);
         }
       }
     });
@@ -245,8 +245,8 @@ describe('ProperSkipList tests', function () {
       let layers = getLayerEntries(skipList);
       for (let layer of layers) {
         for (let [key, value] of layer) {
-          assert(key !== null, true);
-          assert(value !== 'value', true);
+          assert(key !== null);
+          assert(value !== 'value');
         }
       }
     });
@@ -263,19 +263,19 @@ describe('ProperSkipList tests', function () {
 
       it('should be able to get the lowest key', async function () {
         result = skipList.minKey();
-        assert(result === 3, true);
+        assert(result === 3);
       });
 
       it('should be able to get the value at the lowest key', async function () {
         result = skipList.minValue();
-        assert(result === 'value3', true);
+        assert(result === 'value3');
       });
 
       it('should be able to get the entry at the lowest key', async function () {
         let entry = skipList.minEntry();
-        assert(entry.length === 2, true);
-        assert(entry[0] === 3, true);
-        assert(entry[1] === 'value3', true);
+        assert(entry.length === 2);
+        assert(entry[0] === 3);
+        assert(entry[1] === 'value3');
       });
     });
 
@@ -286,19 +286,19 @@ describe('ProperSkipList tests', function () {
 
       it('should return [undefined, undefined] when minEntry is called', async function () {
         result = skipList.minEntry();
-        assert(result.length === 2, true);
-        assert(result[0] === undefined, true);
-        assert(result[1] === undefined, true);
+        assert(result.length === 2);
+        assert(result[0] === undefined);
+        assert(result[1] === undefined);
       });
 
       it('should return undefined when minKey is called', async function () {
         result = skipList.minKey();
-        assert(result === undefined, true);
+        assert(result === undefined);
       });
 
       it('should return undefined when minValue is called', async function () {
         result = skipList.minValue();
-        assert(result === undefined, true);
+        assert(result === undefined);
       });
     });
   });
@@ -314,12 +314,12 @@ describe('ProperSkipList tests', function () {
 
       it('should be able to get the highest key', async function () {
         result = skipList.maxKey();
-        assert(result === 999, true);
+        assert(result === 999);
       });
 
       it('should be able to get the value at the highest key', async function () {
         result = skipList.maxValue();
-        assert(result === 'value999', true);
+        assert(result === 'value999');
       });
     });
 
@@ -330,25 +330,46 @@ describe('ProperSkipList tests', function () {
 
       it('should return [undefined, undefined] when maxEntry is called', async function () {
         result = skipList.maxEntry();
-        assert(result.length === 2, true);
-        assert(result[0] === undefined, true);
-        assert(result[1] === undefined, true);
+        assert(result.length === 2);
+        assert(result[0] === undefined);
+        assert(result[1] === undefined);
       });
 
       it('should return undefined when maxKey is called', async function () {
         result = skipList.maxKey();
-        assert(result === undefined, true);
+        assert(result === undefined);
       });
 
       it('should return undefined when maxValue is called', async function () {
         result = skipList.maxValue();
-        assert(result === undefined, true);
+        assert(result === undefined);
       });
     });
   });
 
   describe('#findEntriesFromMin', function () {
+    beforeEach(async function () {
+      skipList = new ProperSkipList();
+      for (let i = 4; i < 100; i++) {
+        skipList.insert(i, `value${i}`);
+      }
+    });
 
+    it('should be able to iterate over entries starting from the minimum key', async function () {
+      let iterable = skipList.findEntriesFromMin();
+      let lastKey = -Infinity;
+      for (let [key, value, i] of iterable) {
+        if (i === 0) {
+          assert(key === 4);
+        }
+        assert(key > lastKey);
+        lastKey = key;
+      }
+      result = iterable.next();
+      assert(JSON.stringify(result.value) === JSON.stringify([undefined, undefined, 96]));
+      result = iterable.next();
+      assert(JSON.stringify(result.value) === JSON.stringify([undefined, undefined, 96]));
+    });
   });
 
   describe('#findEntriesFromMax', function () {
