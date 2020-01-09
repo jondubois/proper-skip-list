@@ -23,6 +23,13 @@ class SkipList {
       value: undefined,
       nodes: [tailNode]
     };
+    this.typePriorityMap = {
+      'undefined': 0,
+      'object': 1,
+      'number': 2,
+      'bigint': 2,
+      'string': 3
+    };
     headNode.next = tailNode;
     tailNode.prev = headNode;
     headNode.group = this.head;
@@ -84,6 +91,43 @@ class SkipList {
   find(key) {
     let {matchingNode} = this._search(key);
     return matchingNode == null ? undefined : matchingNode.group.value;
+  }
+
+  _isAGreaterThanB(a, b) {
+    let typeA = typeof a;
+    let typeB = typeof b;
+    if (typeA === typeB) {
+      return a > b;
+    }
+    return this.typePriorityMap[typeA] > this.typePriorityMap[typeB];
+  }
+
+  _search(key) {
+    let searchPath = [];
+    let layerIndex = this.head.nodes.length - 1;
+    let currentNode = this.head.nodes[layerIndex];
+    let prevNode = currentNode;
+
+    while (true) {
+      let currentNodeGroup = currentNode.group;
+      let currentKey = currentNodeGroup.key;
+      if (!currentNodeGroup.isTail) {
+        if (this._isAGreaterThanB(key, currentKey) || currentNodeGroup.isHead) {
+          prevNode = currentNode;
+          currentNode = currentNode.next;
+          continue;
+        }
+        if (key === currentKey) {
+          let matchingNode = currentNodeGroup.nodes[0];
+          return {matchingNode, prevNode: matchingNode.prev, searchPath};
+        }
+      }
+      searchPath[layerIndex] = prevNode;
+      if (--layerIndex < 0) {
+        return {matchingNode: undefined, prevNode, searchPath};
+      }
+      currentNode = prevNode.group.nodes[layerIndex];
+    }
   }
 
   _createIteratorFromMin() {
@@ -181,9 +225,12 @@ class SkipList {
   extract(key) {
     let {matchingNode} = this._search(key);
     if (matchingNode) {
-      let prevNode = matchingNode.prev;
-      prevNode.next = matchingNode.next;
-      prevNode.next.prev = prevNode;
+      let nodes = matchingNode.group.nodes;
+      for (let layerNode of nodes) {
+        let prevNode = layerNode.prev;
+        prevNode.next = layerNode.next;
+        prevNode.next.prev = prevNode;
+      }
     }
     return matchingNode == null ? undefined : matchingNode.group.value;
   }
@@ -239,40 +286,6 @@ class SkipList {
     }
     newStartNode.next = newEndNode;
     newEndNode.prev = newStartNode;
-  }
-
-  _search(key) {
-    let searchPath = [];
-    let layerIndex = this.head.nodes.length - 1;
-    let currentNode = this.head.nodes[layerIndex];
-    let prevNode = currentNode;
-    let goToNextLayer = false;
-
-    while (true) {
-      let currentNodeGroup = currentNode.group;
-      if (key > currentNodeGroup.key || currentNodeGroup.isHead) {
-        prevNode = currentNode;
-        currentNode = currentNode.next;
-        continue;
-      }
-      if (key == currentNodeGroup.key) {
-        let keyType = typeof key;
-        let currentNodeGroupKeyType = typeof currentNodeGroup.key;
-         if (keyType === currentNodeGroupKeyType) {
-           let matchingNode = currentNodeGroup.nodes[0];
-           return {matchingNode, prevNode: matchingNode.prev, searchPath};
-         } else if (keyType !== 'number') {
-           prevNode = currentNode;
-           currentNode = currentNode.next;
-           continue;
-         }
-      }
-      searchPath[layerIndex] = prevNode;
-      if (--layerIndex < 0) {
-        return {matchingNode: undefined, prevNode, searchPath};
-      }
-      currentNode = prevNode.group.nodes[layerIndex];
-    }
   }
 }
 
