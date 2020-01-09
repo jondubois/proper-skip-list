@@ -87,6 +87,38 @@ class SkipList {
     return matchingNode === undefined ? undefined : matchingNode.group.value;
   }
 
+  minNode() {
+    let minNode = this.head.nodes[0].next;
+    if (minNode.group.isTail) {
+      minNode = this.head.nodes[0];
+    }
+    return minNode;
+  }
+
+  maxNode() {
+    let maxNode = this.tail.nodes[0].prev;
+    if (maxNode.group.isHead) {
+      maxNode = this.tail.nodes[0];
+    }
+    return maxNode;
+  }
+
+  minKey() {
+    return this.minNode().group.key;
+  }
+
+  maxKey() {
+    return this.maxNode().group.key;
+  }
+
+  minValue() {
+    return this.minNode().group.value;
+  }
+
+  maxValue() {
+    return this.maxNode().group.value;
+  }
+
   delete(key) {
     return this.extract(key) !== undefined;
   }

@@ -115,7 +115,6 @@ describe('ProperSkipList tests', function () {
       for (let i = 2; i >= 0; i--) {
         skipList.insert(i, `number${i}`);
       }
-      logLayerKeys(skipList);
       let currentNode = skipList.head.nodes[0].next;
       assert.equal(currentNode.group.key === 0, true);
       assert.equal(currentNode.group.value === 'number0', true);
@@ -162,6 +161,81 @@ describe('ProperSkipList tests', function () {
 
     it('', async function () {
 
+    });
+  });
+
+  describe('#min', function () {
+    describe('when skip list contains many values', function () {
+      beforeEach(async function () {
+        skipList = new ProperSkipList();
+        for (let i = 999; i >= 3; i--) {
+          skipList.insert(i, `value${i}`);
+        }
+      });
+
+      it('should be able to get the lowest key', async function () {
+        result = skipList.minKey();
+        assert.equal(result === 3, true);
+      });
+
+      it('should be able to get the value at the lowest key', async function () {
+        result = skipList.minValue();
+        assert.equal(result === 'value3', true);
+      });
+
+    });
+
+    describe('when skip list is empty', function () {
+      beforeEach(async function () {
+        skipList = new ProperSkipList();
+      });
+
+      it('should return -Infinity when minKey is called', async function () {
+        result = skipList.minKey();
+        assert.equal(result === -Infinity, true);
+      });
+
+      it('should return undefined when minValue is called', async function () {
+        result = skipList.minValue();
+        assert.equal(result === undefined, true);
+      });
+    });
+  });
+
+  describe('#max', function () {
+    describe('when skip list contains many values', function () {
+      beforeEach(async function () {
+        skipList = new ProperSkipList();
+        for (let i = 999; i >= 3; i--) {
+          skipList.insert(i, `value${i}`);
+        }
+      });
+
+      it('should be able to get the highest key', async function () {
+        result = skipList.maxKey();
+        assert.equal(result === 999, true);
+      });
+
+      it('should be able to get the value at the highest key', async function () {
+        result = skipList.maxValue();
+        assert.equal(result === 'value999', true);
+      });
+    });
+
+    describe('when skip list is empty', function () {
+      beforeEach(async function () {
+        skipList = new ProperSkipList();
+      });
+
+      it('should return Infinity when maxKey is called', async function () {
+        result = skipList.maxKey();
+        assert.equal(result === Infinity, true);
+      });
+
+      it('should return undefined when maxValue is called', async function () {
+        result = skipList.maxValue();
+        assert.equal(result === undefined, true);
+      });
     });
   });
 
