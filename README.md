@@ -1,6 +1,10 @@
 # proper-skip-list
 A fast skip list implementation which supports fetching and deleting multiple adjacent entries at a time.
 
+## Installation
+
+`npm install proper-skip-list --save`
+
 ## Performance
 
 ### Time complexity
