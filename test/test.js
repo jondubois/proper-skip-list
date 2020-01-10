@@ -241,12 +241,40 @@ describe('ProperSkipList tests', function () {
 
     it('should be able to delete null key entries', async function () {
       skipList.insert(null, 'value');
+      skipList.insert(undefined, 'valueundefined');
       skipList.delete(null);
       let layers = getLayerEntries(skipList);
       for (let layer of layers) {
         for (let [key, value] of layer) {
           assert(key !== null);
           assert(value !== 'value');
+        }
+      }
+    });
+
+    it('should continue to function after trying to delete an undefined key', async function () {
+      skipList.delete(undefined);
+      result = skipList.find(12);
+      assert(result === 'value12');
+    });
+  });
+
+  describe('#extract', function () {
+    beforeEach(async function () {
+      skipList = new ProperSkipList();
+      for (let i = 0; i < 20; i++) {
+        skipList.insert(i, `value${i}`);
+      }
+    });
+
+    it('should delete an entry from all layers and return the previous value', async function () {
+      let oldValue = skipList.extract(11);
+      assert(oldValue === 'value11');
+
+      let layers = getLayerKeys(skipList);
+      for (let layer of layers) {
+        for (let key of layer) {
+          assert(key != 11);
         }
       }
     });
@@ -347,6 +375,94 @@ describe('ProperSkipList tests', function () {
     });
   });
 
+  describe('#findEntries', function () {
+    describe('when all entries are adjacent', function () {
+      beforeEach(async function () {
+        skipList = new ProperSkipList();
+        for (let i = 7; i < 107; i++) {
+          skipList.insert(i, `value${i}`);
+        }
+      });
+
+      it('should be able to iterate over entries in ascending order starting from the specified key', async function () {
+        result = skipList.findEntries(37);
+        assert(result.matchingValue === 'value37');
+        let iterable = result.asc;
+        let lastKey = -Infinity;
+        for (let [key, value, i] of iterable) {
+          if (i === 0) {
+            assert(key === 37);
+          }
+          assert(key > lastKey);
+          lastKey = key;
+        }
+        result = iterable.next();
+        result = iterable.next();
+        assert(JSON.stringify(result.value) === JSON.stringify([undefined, undefined, 70]));
+      });
+
+      it('should be able to iterate over entries in descending order starting from the specified key', async function () {
+        result = skipList.findEntries(88);
+        assert(result.matchingValue === 'value88');
+        let iterable = result.desc;
+        let lastKey = Infinity;
+        let lastIndex;
+        for (let [key, value, i] of iterable) {
+          lastIndex = i;
+          if (i === 0) {
+            assert(key === 88);
+          }
+          assert(key < lastKey);
+          lastKey = key;
+        }
+        assert(lastIndex === 81);
+        result = iterable.next();
+        assert(JSON.stringify(result.value) === JSON.stringify([undefined, undefined, 82]));
+        result = iterable.next();
+        assert(JSON.stringify(result.value) === JSON.stringify([undefined, undefined, 82]));
+      });
+    });
+
+    describe('when there are gaps between entries', function () {
+      beforeEach(async function () {
+        skipList = new ProperSkipList();
+        for (let i = 10; i < 1000; i += 10) {
+          skipList.insert(i, `value${i}`);
+        }
+      });
+
+      it('should be able to iterate over nearby entries in ascending order even if the exact matching key cannot be found', async function () {
+        result = skipList.findEntries(19);
+        assert(result.matchingValue === undefined);
+        let iterable = result.asc;
+        let lastKey = -Infinity;
+        for (let [key, value, i] of iterable) {
+          if (i === 0) {
+            assert(key === 20);
+          }
+          assert(key > lastKey);
+          assert(key % 10 === 0);
+          lastKey = key;
+        }
+      });
+
+      it('should be able to iterate over nearby entries in descending order even if the exact matching key cannot be found', async function () {
+        result = skipList.findEntries(89);
+        assert(result.matchingValue === undefined);
+        let iterable = result.desc;
+        let lastKey = Infinity;
+        for (let [key, value, i] of iterable) {
+          if (i === 0) {
+            assert(key === 80);
+          }
+          assert(key < lastKey);
+          assert(key % 10 === 0);
+          lastKey = key;
+        }
+      });
+    });
+  });
+
   describe('#findEntriesFromMin', function () {
     beforeEach(async function () {
       skipList = new ProperSkipList();
@@ -373,36 +489,27 @@ describe('ProperSkipList tests', function () {
   });
 
   describe('#findEntriesFromMax', function () {
-
-  });
-
-  describe('#findSegment', function () {
     beforeEach(async function () {
       skipList = new ProperSkipList();
+      for (let i = 4; i < 100; i++) {
+        skipList.insert(i, `value${i}`);
+      }
     });
 
-    it('', async function () {
-
-    });
-  });
-
-  describe('#deleteSegment', function () {
-    beforeEach(async function () {
-      skipList = new ProperSkipList();
-    });
-
-    it('', async function () {
-
-    });
-  });
-
-  describe('#extract', function () {
-    beforeEach(async function () {
-      skipList = new ProperSkipList();
-    });
-
-    it('', async function () {
-
+    it('should be able to iterate over entries backwards starting from the maximum key', async function () {
+      let iterable = skipList.findEntriesFromMax();
+      let lastKey = Infinity;
+      for (let [key, value, i] of iterable) {
+        if (i === 0) {
+          assert(key === 99);
+        }
+        assert(key < lastKey);
+        lastKey = key;
+      }
+      result = iterable.next();
+      assert(JSON.stringify(result.value) === JSON.stringify([undefined, undefined, 96]));
+      result = iterable.next();
+      assert(JSON.stringify(result.value) === JSON.stringify([undefined, undefined, 96]));
     });
   });
 });

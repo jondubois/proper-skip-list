@@ -119,6 +119,7 @@ class SkipList {
         }
         if (key === currentKey) {
           let matchingNode = currentNodeGroup.nodes[0];
+          searchPath[layerIndex] = matchingNode;
           return {matchingNode, prevNode: matchingNode.prev, searchPath};
         }
       }
@@ -164,17 +165,22 @@ class SkipList {
     return this.maxEntry()[1];
   }
 
+  _extractNode(matchingNode) {
+    let nodes = matchingNode.group.nodes;
+    for (let layerNode of nodes) {
+      let prevNode = layerNode.prev;
+      prevNode.next = layerNode.next;
+      prevNode.next.prev = prevNode;
+    }
+    return matchingNode.group.value;
+  }
+
   extract(key) {
     let {matchingNode} = this._search(key);
     if (matchingNode) {
-      let nodes = matchingNode.group.nodes;
-      for (let layerNode of nodes) {
-        let prevNode = layerNode.prev;
-        prevNode.next = layerNode.next;
-        prevNode.next.prev = prevNode;
-      }
+      return this._extractNode(matchingNode);
     }
-    return matchingNode ? matchingNode.group.value : undefined;
+    return undefined;
   }
 
   delete(key) {
@@ -197,16 +203,56 @@ class SkipList {
     };
   }
 
-  deleteSegment(fromKey, toKey, excludeFirst, excludeLast) {
-    let {prevNode: fromNode} = this._search(fromKey);
-    let {prevNode: toNode} = this._search(toKey);
-    let newStartNode = excludeFirst ? fromNode.next : fromNode;
-    let newEndNode = excludeLast ? toNode.next : toNode.next.next;
-    if (!newEndNode) {
-      newEndNode = toNode.next;
+  deleteSegment(fromKey, toKey, deleteLeft, deleteRight) {
+    let {prevNode: fromNode, searchPath: leftSearchPath, matchingNode: matchingLeftNode} = this._search(fromKey);
+    let {prevNode: toNode, searchPath: rightSearchPath, matchingNode: matchingRightNode} = this._search(toKey);
+    let leftNode = matchingLeftNode ? matchingLeftNode : fromNode;
+    let rightNode = matchingRightNode? matchingRightNode : toNode.next;
+
+    let leftGroupNodes = leftNode.group.nodes;
+    let rightGroupNodes = rightNode.group.nodes;
+    let layerCount = this.head.nodes.length;
+
+    for (let layerIndex = 0; layerIndex < layerCount; layerIndex++) {
+      let layerLeftNode = leftGroupNodes[layerIndex];
+      let layerRightNode = rightGroupNodes[layerIndex];
+
+      if (layerLeftNode && layerRightNode) {
+        layerLeftNode.next = layerRightNode;
+        layerRightNode.prev = layerLeftNode;
+        continue;
+      }
+      if (layerLeftNode) {
+        let layerRightmostNode = rightSearchPath[layerIndex];
+        if (!layerRightmostNode.group.isTail) {
+          layerRightmostNode = layerRightmostNode.next;
+        }
+        layerLeftNode.next = layerRightmostNode;
+        layerRightmostNode.prev = layerLeftNode;
+        continue;
+      }
+      if (layerRightNode) {
+        let layerLeftmostNode = leftSearchPath[layerIndex];
+        layerLeftmostNode.next = layerRightNode;
+        layerRightNode.prev = layerLeftmostNode;
+        continue;
+      }
+      // If neither left nor right nodes are present on the layer, connect based
+      // on search path to remove in-between entries.
+      let layerRightmostNode = rightSearchPath[layerIndex];
+      if (!layerRightmostNode.group.isTail) {
+        layerRightmostNode = layerRightmostNode.next;
+      }
+      let layerLeftmostNode = leftSearchPath[layerIndex];
+      layerLeftmostNode.next = layerRightmostNode;
+      layerRightmostNode.prev = layerLeftmostNode;
     }
-    newStartNode.next = newEndNode;
-    newEndNode.prev = newStartNode;
+    if (deleteLeft && matchingLeftNode) {
+      this._extractNode(matchingLeftNode);
+    }
+    if (deleteRight && matchingRightNode) {
+      this._extractNode(matchingRightNode);
+    }
   }
 
   _createEntriesIteratorAsc(currentNode) {
