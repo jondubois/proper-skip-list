@@ -1,4 +1,4 @@
-const DEFAULT_STACK_UP_PROBABILITY = 0.5;
+const DEFAULT_STACK_UP_PROBABILITY = 0.25;
 
 class SkipList {
 
@@ -37,7 +37,7 @@ class SkipList {
   }
 
   insert(key, value) {
-    let {matchingNode, prevNode, searchPath} = this._search(key);
+    let {matchingNode, prevNode, searchPath} = this._searchAndTrack(key);
     if (matchingNode) {
       matchingNode.group.value = value;
       return;
@@ -93,6 +93,10 @@ class SkipList {
     return matchingNode ? matchingNode.group.value : undefined;
   }
 
+  has(key) {
+    return !!this.find(key);
+  }
+
   _isAGreaterThanB(a, b) {
     let typeA = typeof a;
     let typeB = typeof b;
@@ -102,7 +106,7 @@ class SkipList {
     return this.typePriorityMap[typeA] > this.typePriorityMap[typeB];
   }
 
-  _search(key) {
+  _searchAndTrack(key) {
     let searchPath = [];
     let layerIndex = this.head.nodes.length - 1;
     let currentNode = this.head.nodes[layerIndex];
@@ -126,6 +130,32 @@ class SkipList {
       searchPath[layerIndex] = prevNode;
       if (--layerIndex < 0) {
         return {matchingNode: undefined, prevNode, searchPath};
+      }
+      currentNode = prevNode.group.nodes[layerIndex];
+    }
+  }
+
+  _search(key) {
+    let layerIndex = this.head.nodes.length - 1;
+    let currentNode = this.head.nodes[layerIndex];
+    let prevNode = currentNode;
+
+    while (true) {
+      let currentNodeGroup = currentNode.group;
+      let currentKey = currentNodeGroup.key;
+      if (!currentNodeGroup.isTail) {
+        if (this._isAGreaterThanB(key, currentKey) || currentNodeGroup.isHead) {
+          prevNode = currentNode;
+          currentNode = currentNode.next;
+          continue;
+        }
+        if (key === currentKey) {
+          let matchingNode = currentNodeGroup.nodes[0];
+          return {matchingNode, prevNode: matchingNode.prev};
+        }
+      }
+      if (--layerIndex < 0) {
+        return {matchingNode: undefined, prevNode};
       }
       currentNode = prevNode.group.nodes[layerIndex];
     }
@@ -204,8 +234,8 @@ class SkipList {
   }
 
   deleteSegment(fromKey, toKey, deleteLeft, deleteRight) {
-    let {prevNode: fromNode, searchPath: leftSearchPath, matchingNode: matchingLeftNode} = this._search(fromKey);
-    let {prevNode: toNode, searchPath: rightSearchPath, matchingNode: matchingRightNode} = this._search(toKey);
+    let {prevNode: fromNode, searchPath: leftSearchPath, matchingNode: matchingLeftNode} = this._searchAndTrack(fromKey);
+    let {prevNode: toNode, searchPath: rightSearchPath, matchingNode: matchingRightNode} = this._searchAndTrack(toKey);
     let leftNode = matchingLeftNode ? matchingLeftNode : fromNode;
     let rightNode = matchingRightNode? matchingRightNode : toNode.next;
 

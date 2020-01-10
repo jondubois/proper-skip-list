@@ -461,6 +461,43 @@ describe('ProperSkipList tests', function () {
         }
       });
     });
+
+    describe('when strings are used as keys', function () {
+      beforeEach(async function () {
+        skipList = new ProperSkipList();
+        for (let i = 10; i < 1000; i += 10) {
+          skipList.insert(`key${i}`, `value${i}`);
+        }
+      });
+
+      it('should be able to iterate over nearby entries in ascending order even if the exact matching key cannot be found', async function () {
+        result = skipList.findEntries('key15');
+        assert(result.matchingValue === undefined);
+        let iterable = result.asc;
+        let lastKey = '';
+        for (let [key, value, i] of iterable) {
+          if (i === 0) {
+            assert(key === 'key150');
+          }
+          assert(key > lastKey);
+          lastKey = key;
+        }
+      });
+
+      it('should be able to iterate over nearby entries in descending order even if the exact matching key cannot be found', async function () {
+        result = skipList.findEntries('key89');
+        assert(result.matchingValue === undefined);
+        let iterable = result.desc;
+        let lastKey = 'z';
+        for (let [key, value, i] of iterable) {
+          if (i === 0) {
+            assert(key === 'key880');
+          }
+          assert(key < lastKey);
+          lastKey = key;
+        }
+      });
+    });
   });
 
   describe('#findEntriesFromMin', function () {
@@ -510,6 +547,177 @@ describe('ProperSkipList tests', function () {
       assert(JSON.stringify(result.value) === JSON.stringify([undefined, undefined, 96]));
       result = iterable.next();
       assert(JSON.stringify(result.value) === JSON.stringify([undefined, undefined, 96]));
+    });
+  });
+
+  describe('#deleteSegment', function () {
+    let keyLookup;
+
+    describe('when numeric keys are used', function () {
+      beforeEach(async function () {
+        skipList = new ProperSkipList();
+        keyLookup = {};
+        for (let i = 0; i < 50; i++) {
+          skipList.insert(i, `value${i}`);
+          keyLookup[i] = true;
+        }
+      });
+
+      it('should be able to remove an entire segment of entries in a single operation but keep both the left and right bounds', async function () {
+        skipList.deleteSegment(10, 20);
+
+        let layers = getLayerKeys(skipList);
+        for (let layer of layers) {
+          for (let key of layer) {
+            assert(key <= 10 || key >= 20 || key === undefined);
+          }
+        }
+
+        Object.keys(keyLookup).forEach((key) => {
+          key = Number(key);
+          if (key <= 10 || key >= 20) {
+            assert(skipList.has(key));
+          }
+        });
+      });
+
+      it('should be able to remove an entire segment of entries in a single operation including the left bound', async function () {
+        skipList.deleteSegment(10, 20, true);
+
+        let layers = getLayerKeys(skipList);
+        for (let layer of layers) {
+          for (let key of layer) {
+            assert(key < 10 || key >= 20 || key === undefined);
+          }
+        }
+
+        Object.keys(keyLookup).forEach((key) => {
+          key = Number(key);
+          if (key < 10 || key >= 20) {
+            assert(skipList.has(key));
+          }
+        });
+      });
+
+      it('should be able to remove an entire segment of entries in a single operation including the right bound', async function () {
+        skipList.deleteSegment(10, 20, false, true);
+
+        let layers = getLayerKeys(skipList);
+        for (let layer of layers) {
+          for (let key of layer) {
+            assert(key <= 10 || key > 20 || key === undefined);
+          }
+        }
+
+        Object.keys(keyLookup).forEach((key) => {
+          key = Number(key);
+          if (key <= 10 || key > 20) {
+            assert(skipList.has(key));
+          }
+        });
+      });
+
+      it('should be able to remove an entire segment of entries in a single operation including both the left and right bounds', async function () {
+        skipList.deleteSegment(10, 20, true, true);
+
+        let layers = getLayerKeys(skipList);
+        for (let layer of layers) {
+          for (let key of layer) {
+            assert(key < 10 || key > 20 || key === undefined);
+          }
+        }
+
+        Object.keys(keyLookup).forEach((key) => {
+          key = Number(key);
+          if (key < 10 || key > 20) {
+            assert(skipList.has(key));
+          }
+        });
+      });
+
+      it('should be able to remove an entire segment of entries in a single operation even if there are no exact matches for the left and right bounds', async function () {
+        skipList.deleteSegment(10.5, 19.5);
+
+        let layers = getLayerKeys(skipList);
+        for (let layer of layers) {
+          for (let key of layer) {
+            assert(key <= 10 || key >= 20 || key === undefined);
+          }
+        }
+
+        Object.keys(keyLookup).forEach((key) => {
+          key = Number(key);
+          if (key <= 10 || key >= 20) {
+            assert(skipList.has(key));
+          }
+        });
+      });
+    });
+
+    describe('when string keys are used', function () {
+      beforeEach(async function () {
+        skipList = new ProperSkipList();
+        keyLookup = {};
+        for (let i = 0; i < 50; i++) {
+          skipList.insert(`key${i}`, `value${i}`);
+          keyLookup[i] = true;
+        }
+      });
+
+      it('should be able to remove an entire segment of entries in a single operation but keep both the left and right bounds', async function () {
+        skipList.deleteSegment('key10', 'key20');
+
+        let layers = getLayerKeys(skipList);
+        for (let layer of layers) {
+          for (let key of layer) {
+            assert(key <= 'key10' || key >= 'key20' || key === undefined);
+          }
+        }
+
+        Object.keys(keyLookup).forEach((key) => {
+          key = Number(key);
+          if (key <= 'key10' || key >= 'key20') {
+            assert(skipList.has(key));
+          }
+        });
+      });
+
+      it('should be able to remove an entire segment of entries in a single operation including both the left and right bounds', async function () {
+        skipList.deleteSegment(10, 20, true, true);
+
+        let layers = getLayerKeys(skipList);
+        for (let layer of layers) {
+          for (let key of layer) {
+            assert(key < 'key10' || key > 'key20' || key === undefined);
+          }
+        }
+
+        Object.keys(keyLookup).forEach((key) => {
+          key = Number(key);
+          if (key < 'key10' || key > 'key20') {
+            assert(skipList.has(key));
+          }
+        });
+      });
+
+      it('should be able to remove an entire segment of entries in a single operation even if there are no exact matches for the left and right bounds', async function () {
+        // Insert elements which are lexicographically between (key10 and key11) and between (key19 and key20).
+        skipList.deleteSegment('key10a', 'key19a');
+
+        let layers = getLayerKeys(skipList);
+        for (let layer of layers) {
+          for (let key of layer) {
+            assert(key <= 'key10' || key >= 'key20' || key === undefined);
+          }
+        }
+
+        Object.keys(keyLookup).forEach((key) => {
+          key = Number(key);
+          if (key <= 'key10' || key >= 'key20') {
+            assert(skipList.has(key));
+          }
+        });
+      });
     });
   });
 });
