@@ -3,7 +3,9 @@ A fast skip list implementation which supports fetching and deleting multiple ad
 
 ## Installation
 
-`npm install proper-skip-list --save`
+```bash
+npm install proper-skip-list --save
+```
 
 ## Performance
 
