@@ -1,11 +1,11 @@
 const DEFAULT_STACK_UP_PROBABILITY = 0.25;
 
-class SkipList {
+class ProperSkipList {
 
   constructor(options) {
     options = options || {};
     this.stackUpProbability = options.stackUpProbability || DEFAULT_STACK_UP_PROBABILITY;
-    this.trackLength = options.trackLength !== false;
+    this.updateLength = options.updateLength !== false;
     this.typePriorityMap = {
       'undefined': 0,
       'object': 1,
@@ -39,7 +39,7 @@ class SkipList {
     tailNode.prev = headNode;
     headNode.group = this.head;
     tailNode.group = this.tail;
-    this.length = this.trackLength ? 0 : undefined;
+    this.length = this.updateLength ? 0 : undefined;
   }
 
   insert(key, value) {
@@ -93,7 +93,7 @@ class SkipList {
       newGroup.nodes.push(newNode);
       layerIndex++;
     }
-    if (this.trackLength) this.length++;
+    if (this.updateLength) this.length++;
 
     return undefined;
   }
@@ -212,7 +212,7 @@ class SkipList {
       prevNode.next = layerNode.next;
       prevNode.next.prev = prevNode;
     }
-    if (this.trackLength) this.length--;
+    if (this.updateLength) this.length--;
     return matchingNode.group.value;
   }
 
@@ -258,7 +258,7 @@ class SkipList {
     let leftNode = matchingLeftNode ? matchingLeftNode : fromNode;
     let rightNode = matchingRightNode ? matchingRightNode : toNode.next;
 
-    if (this.trackLength) {
+    if (this.updateLength) {
       let currentNode = leftNode;
       while (currentNode && currentNode.next !== rightNode) {
         this.length--;
@@ -355,4 +355,4 @@ class SkipList {
   }
 }
 
-module.exports = SkipList;
+module.exports = ProperSkipList;
