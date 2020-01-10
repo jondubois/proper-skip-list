@@ -66,12 +66,12 @@ let skipList = new ProperSkipList({
 - **`extract(key)`**: Remove a value at the specified key if it exits. This method returns the value or `undefined` if not found.
 - **`delete(key)`**: Remove a value at the specified key if it exits. This method returns a boolean to indicate whether or not a value existed at that key.
 - **`findEntries(fromKey)`**: Get iterators for entries starting at the specified key in ascending or descending order. The `fromKey` does not need to have an exact match in the list; this method can therefore be used to iterate over nearby keys. The return value is an object in the form `{matchingValue, asc, desc}`. If an exact match for `fromKey` was found, the `matchingValue` property will contain the value at that key, otherwise it will be `undefined`. The `asc` property is an `iterable` iterator which can be used to iterate over records in ascending order starting at `fromKey` (or the next highest value if no exact match is found). The `desc` property is an `iterable` iterator which can be used to iterate over records in descending order starting at `fromKey` (or the next lowest value if no exact match is found).
+- **`findEntriesFromMin()`**: Iterate over entries in ascending order starting at the lowest key. This method returns an iterable iterator.
+- **`findEntriesFromMax()`**: Iterate over entries in descending order starting at the highest key. This method returns an iterable iterator.
 - **`minKey()`**: Get the lowest key in the list.
 - **`maxKey()`**: Get the highest key in the list.
 - **`minValue()`**: Get the value stored at the lowest key in the list.
 - **`maxValue()`**: Get the value stored at the highest key in the list.
-- **`findEntriesFromMin()`**: Iterate over entries in ascending order starting at the lowest key. This method returns an iterable iterator.
-- **`findEntriesFromMax()`**: Iterate over entries in descending order starting at the highest key. This method returns an iterable iterator.
 - **`deleteSegment(fromKey, toKey, deleteLeft, deleteRight)`**: Delete multiple keys with a single operation. The `fromKey` argument specifies the starting key in the range does not need to have an exact match in the list. The `toKey` argument is the end key, it also does not need to have an exact match. The `deleteLeft` argument can be used to specify whether or not the value at `fromKey` should also be deleted if found. The `deleteRight` argument argument can be used to specify whether or not the value at `toKey` should also be deleted if found. By default, only the in-between values will be deleted. If `fromKey` is null, it will delete from the beginning of the skip list. If `fromKey` is null, it will delete until the end of the skip list.
 - **`clear`**: Empty/reset the skip list.
 - **`get length`**: The number of entries stored in the skip list. It will be `undefined` if the `updateLength` constructor option is `false`.
