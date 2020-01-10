@@ -22,17 +22,17 @@ function getLayerEntries(skipList) {
 }
 
 function getLayerKeys(skipList) {
-  return getLayerEntries(skipList).map((layer) => layer.map((entry) => {
+  return getLayerEntries(skipList).map((layer) => layer.map((entry) => entry[0]));
+}
+
+function logLayerKeys(skipList) {
+  let layers = getLayerEntries(skipList).map((layer) => layer.map((entry) => {
     let key = entry[0];
     if (typeof key === 'string') {
       return `"${key}"`;
     }
     return key;
-  }));
-}
-
-function logLayerKeys(skipList) {
-  let layers = getLayerKeys(skipList).reverse();
+  })).reverse();
   for (let layer of layers) {
     console.log(layer.map(key => String(key)).join(','));
   }
@@ -256,6 +256,9 @@ describe('ProperSkipList tests', function () {
       skipList.delete(undefined);
       result = skipList.find(12);
       assert(result === 'value12');
+      skipList.insert(1000, 'testing');
+      result = skipList.find(1000);
+      assert(result === 'testing');
     });
   });
 
@@ -581,6 +584,71 @@ describe('ProperSkipList tests', function () {
         });
       });
 
+      it('should delete segment to the end if the second argument is missing or null', async function () {
+        skipList.deleteSegment(10);
+
+        let layers = getLayerKeys(skipList);
+        for (let layer of layers) {
+          for (let key of layer) {
+            assert(key <= 10 || key === undefined);
+          }
+        }
+
+        Object.keys(keyLookup).forEach((key) => {
+          key = Number(key);
+          if (key <= 10) {
+            assert(skipList.has(key));
+          }
+        });
+      });
+
+      it('should delete segment from the beginning if the first argument is null', async function () {
+        skipList.deleteSegment(null, 10);
+
+        let layers = getLayerKeys(skipList);
+        for (let layer of layers) {
+          for (let key of layer) {
+            assert(key >= 10 || key === undefined);
+          }
+        }
+
+        Object.keys(keyLookup).forEach((key) => {
+          key = Number(key);
+          if (key >= 10) {
+            assert(skipList.has(key));
+          }
+        });
+      });
+
+      it('should delete everything if all arguments are undefined', async function () {
+        skipList.deleteSegment();
+
+        let layers = getLayerKeys(skipList);
+        for (let layer of layers) {
+          for (let key of layer) {
+            assert(key === undefined);
+          }
+        }
+      });
+
+      it('should be able to remove an entire segment of entries in a single operation but keep both the left and right bounds', async function () {
+        skipList.deleteSegment(10, 20);
+
+        let layers = getLayerKeys(skipList);
+        for (let layer of layers) {
+          for (let key of layer) {
+            assert(key <= 10 || key >= 20 || key === undefined);
+          }
+        }
+
+        Object.keys(keyLookup).forEach((key) => {
+          key = Number(key);
+          if (key <= 10 || key >= 20) {
+            assert(skipList.has(key));
+          }
+        });
+      });
+
       it('should be able to remove an entire segment of entries in a single operation including the left bound', async function () {
         skipList.deleteSegment(10, 20, true);
 
@@ -659,8 +727,9 @@ describe('ProperSkipList tests', function () {
         skipList = new ProperSkipList();
         keyLookup = {};
         for (let i = 0; i < 50; i++) {
-          skipList.insert(`key${i}`, `value${i}`);
-          keyLookup[i] = true;
+          let key = `key${i}`;
+          skipList.insert(key, `value${i}`);
+          keyLookup[key] = true;
         }
       });
 
@@ -675,7 +744,6 @@ describe('ProperSkipList tests', function () {
         }
 
         Object.keys(keyLookup).forEach((key) => {
-          key = Number(key);
           if (key <= 'key10' || key >= 'key20') {
             assert(skipList.has(key));
           }
@@ -683,7 +751,7 @@ describe('ProperSkipList tests', function () {
       });
 
       it('should be able to remove an entire segment of entries in a single operation including both the left and right bounds', async function () {
-        skipList.deleteSegment(10, 20, true, true);
+        skipList.deleteSegment('key10', 'key20', true, true);
 
         let layers = getLayerKeys(skipList);
         for (let layer of layers) {
@@ -693,7 +761,6 @@ describe('ProperSkipList tests', function () {
         }
 
         Object.keys(keyLookup).forEach((key) => {
-          key = Number(key);
           if (key < 'key10' || key > 'key20') {
             assert(skipList.has(key));
           }
@@ -707,16 +774,156 @@ describe('ProperSkipList tests', function () {
         let layers = getLayerKeys(skipList);
         for (let layer of layers) {
           for (let key of layer) {
-            assert(key <= 'key10' || key >= 'key20' || key === undefined);
+            assert(key <= 'key10' || key >= 'key2' || key === undefined);
           }
         }
 
         Object.keys(keyLookup).forEach((key) => {
-          key = Number(key);
-          if (key <= 'key10' || key >= 'key20') {
+          if (key <= 'key10' || key >= 'key2') {
             assert(skipList.has(key));
           }
         });
+      });
+    });
+
+    describe('when numeric and string keys are used together', function () {
+      let numberKeyLookup;
+      let stringKeyLookup;
+      beforeEach(async function () {
+        skipList = new ProperSkipList();
+        numberKeyLookup = {};
+        stringKeyLookup = {};
+        for (let i = 0; i < 50; i++) {
+          skipList.insert(i, `value${i}`);
+          numberKeyLookup[i] = true;
+        }
+        for (let i = 0; i < 50; i++) {
+          let key = `key${i}`;
+          skipList.insert(key, `value${i}`);
+          stringKeyLookup[key] = true;
+        }
+      });
+
+      it('should be able to delete a segment across type boundaries', async function () {
+        // Insert elements which are lexicographically between (key10 and key11) and between (key19 and key20).
+        skipList.deleteSegment(10, 'key40');
+
+        let layers = getLayerKeys(skipList);
+        for (let layer of layers) {
+          for (let key of layer) {
+            let isString = isNaN(key);
+            if (isString) {
+              assert(key >= 'key40' || key === undefined);
+            } else {
+              assert(key <= 10 || key === undefined);
+            }
+          }
+        }
+
+        Object.keys(numberKeyLookup).forEach((key) => {
+          key = Number(key);
+          if (key <= 10) {
+            assert(skipList.has(key));
+          }
+        });
+
+        Object.keys(stringKeyLookup).forEach((key) => {
+          if (key >= 'key40') {
+            assert(skipList.has(key));
+          }
+        });
+      });
+    });
+  });
+
+  describe('#clear', function () {
+    beforeEach(async function () {
+      skipList = new ProperSkipList();
+      for (let i = 0; i < 50; i++) {
+        skipList.insert(i, `value${i}`);
+      }
+    });
+
+    it('should continue working after clear is called', async function () {
+      skipList.clear();
+      for (let i = 0; i < 50; i++) {
+        skipList.insert(i, `value${i}`);
+      }
+      result = skipList.find(10);
+      assert(result === 'value10');
+    });
+  });
+
+  describe('#length', function () {
+    describe('when default settings are used', async function () {
+      beforeEach(async function () {
+        skipList = new ProperSkipList();
+        for (let i = 0; i < 50; i++) {
+          skipList.insert(i, `value${i}`);
+        }
+      });
+
+      it('should show the correct number of entries after elements are inserted', async function () {
+        assert(skipList.length === 50);
+        skipList.insert('hello', 1);
+        assert(skipList.length === 51);
+        skipList.insert('foo', 'bar');
+        assert(skipList.length === 52);
+        skipList.insert(null, 'bar');
+        assert(skipList.length === 53);
+        skipList.insert('foo', 'two');
+        assert(skipList.length === 53);
+        skipList.insert(null, 'test');
+        assert(skipList.length === 53);
+      });
+
+      it('should show the correct number of entries after elements are deleted', async function () {
+        skipList.delete(10);
+        assert(skipList.length === 49);
+        skipList.delete(100);
+        assert(skipList.length === 49);
+        skipList.delete(undefined);
+        assert(skipList.length === 49);
+        skipList.delete(null);
+        assert(skipList.length === 49);
+      });
+
+      it('should show the correct number of entries after segments are deleted', async function () {
+        skipList.deleteSegment(10, 20);
+        assert(skipList.length === 41);
+        skipList.deleteSegment(40, 50);
+        assert(skipList.length === 32);
+        skipList.deleteSegment();
+        assert(skipList.length === 0);
+      });
+
+      it('should reset length to 0 after clear is invoked', async function () {
+        skipList.clear();
+        assert(skipList.length === 0);
+      });
+    });
+
+    describe('when trackLength is false', async function () {
+      beforeEach(async function () {
+        skipList = new ProperSkipList({
+          trackLength: false
+        });
+        for (let i = 0; i < 50; i++) {
+          skipList.insert(i, `value${i}`);
+        }
+      });
+
+      it('should show the length as undefined', async function () {
+        assert(skipList.length === undefined);
+      });
+
+      it('should stay as undefined when different methods are called', async function () {
+        skipList.deleteSegment(10, 20);
+        assert(skipList.length === undefined);
+        skipList.delete(2);
+        assert(skipList.length === undefined);
+        skipList.clear();
+        assert(skipList.length === undefined);
       });
     });
   });
