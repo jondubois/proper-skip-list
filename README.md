@@ -74,7 +74,16 @@ let skipList = new ProperSkipList({
 - **`maxValue()`**: Get the value stored at the highest key in the list.
 - **`deleteSegment(fromKey, toKey, deleteLeft, deleteRight)`**: Delete multiple keys with a single operation. The `fromKey` argument specifies the starting key in the range does not need to have an exact match in the list. The `toKey` argument is the end key, it also does not need to have an exact match. The `deleteLeft` argument can be used to specify whether or not the value at `fromKey` should also be deleted if found. The `deleteRight` argument argument can be used to specify whether or not the value at `toKey` should also be deleted if found. By default, only the in-between values will be deleted. If `fromKey` is null, it will delete from the beginning of the skip list. If `fromKey` is null, it will delete until the end of the skip list.
 - **`clear`**: Empty/reset the skip list.
-- **`get length`**: The number of entries stored in the skip list. It will be `undefined` if the `updateLength` constructor option is `false`.
+
+### Properties
+
+Note that most of these properties were intended to be read-only.
+
+- **`length`**: The number of entries stored in the skip list. It will be `undefined` if the `updateLength` constructor option is `false`.
+- **`stackUpProbability`**: The probability of an entry stacking up a single level when it is inserted into the skip list.
+- **`updateLength`**: Whether or not the length property is being updated.
+- **`head`**: The head group of the skip list which holds an array of head nodes. This can be used to traverse all layers of the skip list for more advanced use cases.
+- **`tail`**: The tail group of the skip list which holds an array of tail nodes. This can be used to traverse all layers of the skip list for more advanced use cases.
 
 ### Iterators
 
