@@ -50,7 +50,7 @@ let skipList = new ProperSkipList();
 
 // Sample custom options:
 let skipList = new ProperSkipList({
-  stackUpProbability: 0.1, // 0.25 by default
+  stackUpProbability: 0.5, // 0.25 by default
   updateLength: false // true by default
 });
 ```
@@ -75,3 +75,19 @@ let skipList = new ProperSkipList({
 - **`deleteSegment(fromKey, toKey, deleteLeft, deleteRight)`**: Delete multiple keys with a single operation. The `fromKey` argument specifies the starting key in the range does not need to have an exact match in the list. The `toKey` argument is the end key, it also does not need to have an exact match. The `deleteLeft` argument can be used to specify whether or not the value at `fromKey` should also be deleted if found. The `deleteRight` argument argument can be used to specify whether or not the value at `toKey` should also be deleted if found. By default, only the in-between values will be deleted. If `fromKey` is null, it will delete from the beginning of the skip list. If `fromKey` is null, it will delete until the end of the skip list.
 - **`clear`**: Empty/reset the skip list.
 - **`get length`**: The number of entries stored in the skip list. It will be `undefined` if the `updateLength` constructor option is `false`.
+
+### Iterators
+
+Iterators returned by methods like `findEntries`, `findEntriesFromMin` and `findEntriesFromMax` are iterable and can be looped over like this (example):
+
+```js
+let {asc, desc} = this.findEntries(1234);
+for (let [key, value, i] of asc) {
+
+  // ... Do something.
+
+  if (i > 100) break;
+}
+```
+
+Alternatively, `asc.next()` could be called manually from inside a `while` loop.
