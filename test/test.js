@@ -903,10 +903,10 @@ describe('ProperSkipList tests', function () {
       });
     });
 
-    describe('when trackLength is false', async function () {
+    describe('when updateLength is false', async function () {
       beforeEach(async function () {
         skipList = new ProperSkipList({
-          trackLength: false
+          updateLength: false
         });
         for (let i = 0; i < 50; i++) {
           skipList.insert(i, `value${i}`);
