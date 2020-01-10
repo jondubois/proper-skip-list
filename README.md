@@ -28,8 +28,8 @@ The time complexity relative to the number of elements which will be removed fro
 
 ### Space complexity
 
-Average: `O(n)`
-Worst case: `O(n log n)`
+- Average: `O(n)`
+- Worst case: `O(n log n)`
 
 The `stackUpProbability` option can be modified to optimize space usage and performance to suit more advanced use cases but it should be used cautiously.
 
@@ -41,7 +41,7 @@ If strings are used, the order is lexicographic.
 ### Constructor
 
 ```js
-const ProperSkipList = require('proper-skip-list'); // Alternatively, import can be used.
+const ProperSkipList = require('proper-skip-list');
 
 // Default options:
 let skipList = new ProperSkipList();
