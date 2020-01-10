@@ -5,6 +5,18 @@ class SkipList {
   constructor(options) {
     options = options || {};
     this.stackUpProbability = options.stackUpProbability || DEFAULT_STACK_UP_PROBABILITY;
+    this.trackLength = options.trackLength !== false;
+    this.typePriorityMap = {
+      'undefined': 0,
+      'object': 1,
+      'number': 2,
+      'bigint': 2,
+      'string': 3
+    };
+    this.clear();
+  }
+
+  clear() {
     let headNode = {
       prev: null
     };
@@ -23,24 +35,19 @@ class SkipList {
       value: undefined,
       nodes: [tailNode]
     };
-    this.typePriorityMap = {
-      'undefined': 0,
-      'object': 1,
-      'number': 2,
-      'bigint': 2,
-      'string': 3
-    };
     headNode.next = tailNode;
     tailNode.prev = headNode;
     headNode.group = this.head;
     tailNode.group = this.tail;
+    this.length = this.trackLength ? 0 : undefined;
   }
 
   insert(key, value) {
     let {matchingNode, prevNode, searchPath} = this._searchAndTrack(key);
     if (matchingNode) {
+      let previousValue = matchingNode.group.value;
       matchingNode.group.value = value;
-      return;
+      return previousValue;
     }
 
     // Insert the entry.
@@ -86,6 +93,9 @@ class SkipList {
       newGroup.nodes.push(newNode);
       layerIndex++;
     }
+    if (this.trackLength) this.length++;
+
+    return undefined;
   }
 
   find(key) {
@@ -202,6 +212,7 @@ class SkipList {
       prevNode.next = layerNode.next;
       prevNode.next.prev = prevNode;
     }
+    if (this.trackLength) this.length--;
     return matchingNode.group.value;
   }
 
@@ -234,10 +245,26 @@ class SkipList {
   }
 
   deleteSegment(fromKey, toKey, deleteLeft, deleteRight) {
+    if (fromKey == null) {
+      fromKey = this.minKey();
+      deleteLeft = true;
+    }
+    if (toKey == null) {
+      toKey = this.maxKey();
+      deleteRight = true;
+    }
     let {prevNode: fromNode, searchPath: leftSearchPath, matchingNode: matchingLeftNode} = this._searchAndTrack(fromKey);
     let {prevNode: toNode, searchPath: rightSearchPath, matchingNode: matchingRightNode} = this._searchAndTrack(toKey);
     let leftNode = matchingLeftNode ? matchingLeftNode : fromNode;
-    let rightNode = matchingRightNode? matchingRightNode : toNode.next;
+    let rightNode = matchingRightNode ? matchingRightNode : toNode.next;
+
+    if (this.trackLength) {
+      let currentNode = leftNode;
+      while (currentNode && currentNode.next !== rightNode) {
+        this.length--;
+        currentNode = currentNode.next;
+      }
+    }
 
     let leftGroupNodes = leftNode.group.nodes;
     let rightGroupNodes = rightNode.group.nodes;
