@@ -1,6 +1,6 @@
 {
   "name": "proper-skip-list",
-  "version": "2.1.1",
+  "version": "3.0.0",
   "description": "Fast skip list with flexible interface to traverse neighboring nodes bidirectionally.",
   "main": "index.js",
   "scripts": {
