@@ -117,8 +117,9 @@ class ProperSkipList {
   }
 
   _searchAndTrack(key) {
-    let searchPath = [];
-    let layerIndex = this.head.nodes.length - 1;
+    let layerCount = this.head.nodes.length;
+    let searchPath = new Array(layerCount);
+    let layerIndex = layerCount - 1;
     let currentNode = this.head.nodes[layerIndex];
     let prevNode = currentNode;
 
