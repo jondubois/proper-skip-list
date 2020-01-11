@@ -1,5 +1,6 @@
 # proper-skip-list
 A fast skip list implementation which supports fetching and deleting multiple adjacent entries at a time.
+It's ideal for efficiently storing and fetching ordered data.
 
 ## Installation
 
