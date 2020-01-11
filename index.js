@@ -116,6 +116,7 @@ class ProperSkipList {
     return this.typePriorityMap[typeA] > this.typePriorityMap[typeB];
   }
 
+  // The two search methods are similar but were separated for performance reasons.
   _searchAndTrack(key) {
     let layerCount = this.head.nodes.length;
     let searchPath = new Array(layerCount);
