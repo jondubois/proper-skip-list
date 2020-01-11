@@ -25,11 +25,11 @@ Average case, relative to the total number of elements in the list:
 - **maxValue**: `O(1)`
 - **findEntriesFromMin**: `O(1)`
 - **findEntriesFromMax**: `O(1)`
-- **deleteSegment**: `O(log n)`
+- **deleteRange**: `O(log n)`
 - **clear**: `O(1)`
 - **get length**: `O(1)`
 
-Note that the **deleteSegment** method is `O(log n)` relative to the number of elements in the list.
+Note that the **deleteRange** method is `O(log n)` relative to the number of elements in the list.
 The time complexity relative to the number of elements which will be removed from the list is different and it varies depending on whether the `updateLength` constructor option is `true` or `false`. If `true`, time complexity is `O(n)`, if `false`, it is `O(1)`.
 
 ### Space complexity
@@ -62,7 +62,7 @@ let skipList = new ProperSkipList({
 ```
 
 - The `stackUpProbability` option is the probability of an entry stacking up a single level when it is inserted into the skip list.
-- The `updateLength` option allows you to disable the `length` property of the skip list. Not updating the `length` of the skip list can make the `deleteSegment` method faster for certain use cases which involve deleting large segments of the skip list in a single operation.
+- The `updateLength` option allows you to disable the `length` property of the skip list. Not updating the `length` of the skip list can make the `deleteRange` method faster for certain use cases which involve deleting large segments of the skip list in a single operation.
 
 ### Methods
 
@@ -78,7 +78,7 @@ let skipList = new ProperSkipList({
 - **`maxKey()`**: Get the highest key in the list.
 - **`minValue()`**: Get the value stored at the lowest key in the list.
 - **`maxValue()`**: Get the value stored at the highest key in the list.
-- **`deleteSegment(fromKey, toKey, deleteLeft, deleteRight)`**: Delete multiple entries with a single operation. The `fromKey` argument specifies the starting key in the range does not need to have an exact match in the list. The `toKey` argument is the end key, it also does not need to have an exact match. The `deleteLeft` argument can be used to specify whether or not the value at `fromKey` should also be deleted if found. The `deleteRight` argument argument can be used to specify whether or not the value at `toKey` should also be deleted if found. By default, only the in-between values will be deleted. If `fromKey` is null, it will delete from the beginning of the skip list. If `fromKey` is null, it will delete until the end of the skip list.
+- **`deleteRange(fromKey, toKey, deleteLeft, deleteRight)`**: Delete multiple entries with a single operation. The `fromKey` argument specifies the starting key in the range does not need to have an exact match in the list. The `toKey` argument is the end key, it also does not need to have an exact match. The `deleteLeft` argument can be used to specify whether or not the value at `fromKey` should also be deleted if found. The `deleteRight` argument argument can be used to specify whether or not the value at `toKey` should also be deleted if found. By default, only the in-between values will be deleted. If `fromKey` is null, it will delete from the beginning of the skip list. If `fromKey` is null, it will delete until the end of the skip list.
 - **`clear`**: Empty/reset the skip list.
 
 ### Properties

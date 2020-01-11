@@ -553,7 +553,7 @@ describe('ProperSkipList tests', function () {
     });
   });
 
-  describe('#deleteSegment', function () {
+  describe('#deleteRange', function () {
     let keyLookup;
 
     describe('when numeric keys are used', function () {
@@ -566,8 +566,8 @@ describe('ProperSkipList tests', function () {
         }
       });
 
-      it('should be able to remove an entire segment of entries in a single operation but keep both the left and right bounds', async function () {
-        skipList.deleteSegment(10, 20);
+      it('should be able to remove an entire range of entries in a single operation but keep both the left and right bounds', async function () {
+        skipList.deleteRange(10, 20);
 
         let layers = getLayerKeys(skipList);
         for (let layer of layers) {
@@ -584,8 +584,8 @@ describe('ProperSkipList tests', function () {
         });
       });
 
-      it('should delete segment to the end if the second argument is missing or null', async function () {
-        skipList.deleteSegment(10);
+      it('should delete range to the end if the second argument is missing or null', async function () {
+        skipList.deleteRange(10);
 
         let layers = getLayerKeys(skipList);
         for (let layer of layers) {
@@ -602,8 +602,8 @@ describe('ProperSkipList tests', function () {
         });
       });
 
-      it('should delete segment from the beginning if the first argument is null', async function () {
-        skipList.deleteSegment(null, 10);
+      it('should delete range from the beginning if the first argument is null', async function () {
+        skipList.deleteRange(null, 10);
 
         let layers = getLayerKeys(skipList);
         for (let layer of layers) {
@@ -621,7 +621,7 @@ describe('ProperSkipList tests', function () {
       });
 
       it('should delete everything if all arguments are undefined', async function () {
-        skipList.deleteSegment();
+        skipList.deleteRange();
 
         let layers = getLayerKeys(skipList);
         for (let layer of layers) {
@@ -631,8 +631,8 @@ describe('ProperSkipList tests', function () {
         }
       });
 
-      it('should be able to remove an entire segment of entries in a single operation but keep both the left and right bounds', async function () {
-        skipList.deleteSegment(10, 20);
+      it('should be able to remove an entire range of entries in a single operation but keep both the left and right bounds', async function () {
+        skipList.deleteRange(10, 20);
 
         let layers = getLayerKeys(skipList);
         for (let layer of layers) {
@@ -649,8 +649,8 @@ describe('ProperSkipList tests', function () {
         });
       });
 
-      it('should be able to remove an entire segment of entries in a single operation including the left bound', async function () {
-        skipList.deleteSegment(10, 20, true);
+      it('should be able to remove an entire range of entries in a single operation including the left bound', async function () {
+        skipList.deleteRange(10, 20, true);
 
         let layers = getLayerKeys(skipList);
         for (let layer of layers) {
@@ -667,8 +667,8 @@ describe('ProperSkipList tests', function () {
         });
       });
 
-      it('should be able to remove an entire segment of entries in a single operation including the right bound', async function () {
-        skipList.deleteSegment(10, 20, false, true);
+      it('should be able to remove an entire range of entries in a single operation including the right bound', async function () {
+        skipList.deleteRange(10, 20, false, true);
 
         let layers = getLayerKeys(skipList);
         for (let layer of layers) {
@@ -685,8 +685,8 @@ describe('ProperSkipList tests', function () {
         });
       });
 
-      it('should be able to remove an entire segment of entries in a single operation including both the left and right bounds', async function () {
-        skipList.deleteSegment(10, 20, true, true);
+      it('should be able to remove an entire range of entries in a single operation including both the left and right bounds', async function () {
+        skipList.deleteRange(10, 20, true, true);
 
         let layers = getLayerKeys(skipList);
         for (let layer of layers) {
@@ -703,8 +703,8 @@ describe('ProperSkipList tests', function () {
         });
       });
 
-      it('should be able to remove an entire segment of entries in a single operation even if there are no exact matches for the left and right bounds', async function () {
-        skipList.deleteSegment(10.5, 19.5);
+      it('should be able to remove an entire range of entries in a single operation even if there are no exact matches for the left and right bounds', async function () {
+        skipList.deleteRange(10.5, 19.5);
 
         let layers = getLayerKeys(skipList);
         for (let layer of layers) {
@@ -733,8 +733,8 @@ describe('ProperSkipList tests', function () {
         }
       });
 
-      it('should be able to remove an entire segment of entries in a single operation but keep both the left and right bounds', async function () {
-        skipList.deleteSegment('key10', 'key20');
+      it('should be able to remove an entire range of entries in a single operation but keep both the left and right bounds', async function () {
+        skipList.deleteRange('key10', 'key20');
 
         let layers = getLayerKeys(skipList);
         for (let layer of layers) {
@@ -750,8 +750,8 @@ describe('ProperSkipList tests', function () {
         });
       });
 
-      it('should be able to remove an entire segment of entries in a single operation including both the left and right bounds', async function () {
-        skipList.deleteSegment('key10', 'key20', true, true);
+      it('should be able to remove an entire range of entries in a single operation including both the left and right bounds', async function () {
+        skipList.deleteRange('key10', 'key20', true, true);
 
         let layers = getLayerKeys(skipList);
         for (let layer of layers) {
@@ -767,9 +767,9 @@ describe('ProperSkipList tests', function () {
         });
       });
 
-      it('should be able to remove an entire segment of entries in a single operation even if there are no exact matches for the left and right bounds', async function () {
+      it('should be able to remove an entire range of entries in a single operation even if there are no exact matches for the left and right bounds', async function () {
         // Insert elements which are lexicographically between (key10 and key11) and between (key19 and key20).
-        skipList.deleteSegment('key10a', 'key19a');
+        skipList.deleteRange('key10a', 'key19a');
 
         let layers = getLayerKeys(skipList);
         for (let layer of layers) {
@@ -804,9 +804,9 @@ describe('ProperSkipList tests', function () {
         }
       });
 
-      it('should be able to delete a segment across type boundaries', async function () {
+      it('should be able to delete a range across type boundaries', async function () {
         // Insert elements which are lexicographically between (key10 and key11) and between (key19 and key20).
-        skipList.deleteSegment(10, 'key40');
+        skipList.deleteRange(10, 'key40');
 
         let layers = getLayerKeys(skipList);
         for (let layer of layers) {
@@ -888,12 +888,12 @@ describe('ProperSkipList tests', function () {
         assert(skipList.length === 49);
       });
 
-      it('should show the correct number of entries after segments are deleted', async function () {
-        skipList.deleteSegment(10, 20);
+      it('should show the correct number of entries after ranges are deleted', async function () {
+        skipList.deleteRange(10, 20);
         assert(skipList.length === 41);
-        skipList.deleteSegment(40, 50);
+        skipList.deleteRange(40, 50);
         assert(skipList.length === 32);
-        skipList.deleteSegment();
+        skipList.deleteRange();
         assert(skipList.length === 0);
       });
 
@@ -918,7 +918,7 @@ describe('ProperSkipList tests', function () {
       });
 
       it('should stay as undefined when different methods are called', async function () {
-        skipList.deleteSegment(10, 20);
+        skipList.deleteRange(10, 20);
         assert(skipList.length === undefined);
         skipList.delete(2);
         assert(skipList.length === undefined);

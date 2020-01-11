@@ -244,7 +244,7 @@ class ProperSkipList {
     };
   }
 
-  deleteSegment(fromKey, toKey, deleteLeft, deleteRight) {
+  deleteRange(fromKey, toKey, deleteLeft, deleteRight) {
     if (fromKey == null) {
       fromKey = this.minKey();
       deleteLeft = true;
