@@ -14,7 +14,7 @@ npm install proper-skip-list --save
 
 Average case, relative to the total number of elements in the list:
 
-- **insert**: `O(log n)`
+- **upsert**: `O(log n)`
 - **find**: `O(log n)`
 - **has**: `O(log n)`
 - **extract**: `O(log n)`
@@ -67,7 +67,7 @@ let skipList = new ProperSkipList({
 
 ### Methods
 
-- **`insert(key, value)`**: Insert a value into the skip list at the specified key. If a value already exists at that key, it will be replaced.
+- **`upsert(key, value)`**: Insert a value into the skip list at the specified key. If a value already exists at that key, it will be replaced.
 - **`find(key)`**: Get the value stored at the specified key. This method returns `undefined` if a matching value is not found.
 - **`has(key)`**: Check if an entry with the specified key exists.
 - **`extract(key)`**: Remove a value at the specified key if it exits. This method returns the value or `undefined` if not found.

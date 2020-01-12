@@ -49,14 +49,14 @@ describe('ProperSkipList tests', function () {
   let skipList;
   let result;
 
-  describe('#insert', function () {
+  describe('#upsert', function () {
     beforeEach(async function () {
       skipList = new ProperSkipList();
     });
 
     it('should insert numeric keys in sorted order inside the skip list', async function () {
       for (let i = 0; i < 100; i++) {
-        skipList.insert(i, `value${i}`);
+        skipList.upsert(i, `value${i}`);
       }
       let currentNode = skipList.head.nodes[0].next;
       while (currentNode && currentNode.next) {
@@ -68,12 +68,12 @@ describe('ProperSkipList tests', function () {
 
     it('should allow an existing numeric key to be replaced', async function () {
       for (let i = 0; i < 100; i++) {
-        skipList.insert(i, `value${i}`);
+        skipList.upsert(i, `value${i}`);
       }
       result = skipList.find(11);
       assert(result, 'value11');
 
-      skipList.insert(11, 'updated');
+      skipList.upsert(11, 'updated');
 
       result = skipList.find(11);
       assert(result, 'updated');
@@ -81,7 +81,7 @@ describe('ProperSkipList tests', function () {
 
     it('should have multiple layers of decreasing size', async function () {
       for (let i = 0; i < 1000; i++) {
-        skipList.insert(i, `value${i}`);
+        skipList.upsert(i, `value${i}`);
       }
       let layers = getLayerKeys(skipList);
 
@@ -93,12 +93,12 @@ describe('ProperSkipList tests', function () {
 
     it('should support inserting and updating values with strings as keys', async function () {
       for (let i = 0; i < 100; i++) {
-        skipList.insert(`key${i}`, `value${i}`);
+        skipList.upsert(`key${i}`, `value${i}`);
       }
       result = skipList.find('key88');
       assert(result, 'value88');
 
-      skipList.insert('key88', 'updated');
+      skipList.upsert('key88', 'updated');
 
       result = skipList.find('key88');
       assert(result, 'updated');
@@ -106,7 +106,7 @@ describe('ProperSkipList tests', function () {
 
     it('should store string keys based on lexicographical order', async function () {
       for (let i = 4; i >= 0; i--) {
-        skipList.insert(`key${i}`, `value${i}`);
+        skipList.upsert(`key${i}`, `value${i}`);
       }
       let currentNode = skipList.head.nodes[0].next;
       assert(currentNode.group.key === 'key0');
@@ -127,10 +127,10 @@ describe('ProperSkipList tests', function () {
 
     it('should support mixing string and numeric keys', async function () {
       for (let i = 2; i >= 0; i--) {
-        skipList.insert(`key${i}`, `string${i}`);
+        skipList.upsert(`key${i}`, `string${i}`);
       }
       for (let i = 2; i >= 0; i--) {
-        skipList.insert(i, `number${i}`);
+        skipList.upsert(i, `number${i}`);
       }
       let currentNode = skipList.head.nodes[0].next;
       assert(currentNode.group.key === 0);
@@ -153,8 +153,8 @@ describe('ProperSkipList tests', function () {
     });
 
     it('should support using null and undefined as keys', async function () {
-      skipList.insert(null, 'value1');
-      skipList.insert(undefined, 'value2');
+      skipList.upsert(null, 'value1');
+      skipList.upsert(undefined, 'value2');
       let layers = getLayerEntries(skipList);
       let bottomLayer = layers[0];
       assert(bottomLayer[1][0] === undefined);
@@ -162,14 +162,14 @@ describe('ProperSkipList tests', function () {
     });
 
     it('should support mixing null, undefined, strings and numbers as keys', async function () {
-      skipList.insert(undefined, '[undefined]');
-      skipList.insert(null, '[null]');
-      skipList.insert(3, 'number3');
-      skipList.insert(10, 'number10');
-      skipList.insert('3', 'string3');
-      skipList.insert('4', 'string4');
-      skipList.insert('hello', 'stringhello');
-      skipList.insert('test', 'stringtest');
+      skipList.upsert(undefined, '[undefined]');
+      skipList.upsert(null, '[null]');
+      skipList.upsert(3, 'number3');
+      skipList.upsert(10, 'number10');
+      skipList.upsert('3', 'string3');
+      skipList.upsert('4', 'string4');
+      skipList.upsert('hello', 'stringhello');
+      skipList.upsert('test', 'stringtest');
 
       let layers = getLayerEntries(skipList);
       let bottomLayer = layers[0];
@@ -190,10 +190,10 @@ describe('ProperSkipList tests', function () {
       beforeEach(async function () {
         skipList = new ProperSkipList();
         for (let i = 0; i < 1000; i++) {
-          skipList.insert(i, `value${i}`);
+          skipList.upsert(i, `value${i}`);
         }
-        skipList.insert('hello', 'world');
-        skipList.insert('foo', 'bar');
+        skipList.upsert('hello', 'world');
+        skipList.upsert('foo', 'bar');
       });
 
       it('should be able to find an entry which was previously inserted', async function () {
@@ -225,7 +225,7 @@ describe('ProperSkipList tests', function () {
     beforeEach(async function () {
       skipList = new ProperSkipList();
       for (let i = 0; i < 20; i++) {
-        skipList.insert(i, `value${i}`);
+        skipList.upsert(i, `value${i}`);
       }
     });
 
@@ -240,8 +240,8 @@ describe('ProperSkipList tests', function () {
     });
 
     it('should be able to delete null key entries', async function () {
-      skipList.insert(null, 'value');
-      skipList.insert(undefined, 'valueundefined');
+      skipList.upsert(null, 'value');
+      skipList.upsert(undefined, 'valueundefined');
       skipList.delete(null);
       let layers = getLayerEntries(skipList);
       for (let layer of layers) {
@@ -256,7 +256,7 @@ describe('ProperSkipList tests', function () {
       skipList.delete(undefined);
       result = skipList.find(12);
       assert(result === 'value12');
-      skipList.insert(1000, 'testing');
+      skipList.upsert(1000, 'testing');
       result = skipList.find(1000);
       assert(result === 'testing');
     });
@@ -266,7 +266,7 @@ describe('ProperSkipList tests', function () {
     beforeEach(async function () {
       skipList = new ProperSkipList();
       for (let i = 0; i < 20; i++) {
-        skipList.insert(i, `value${i}`);
+        skipList.upsert(i, `value${i}`);
       }
     });
 
@@ -288,7 +288,7 @@ describe('ProperSkipList tests', function () {
       beforeEach(async function () {
         skipList = new ProperSkipList();
         for (let i = 999; i >= 3; i--) {
-          skipList.insert(i, `value${i}`);
+          skipList.upsert(i, `value${i}`);
         }
       });
 
@@ -339,7 +339,7 @@ describe('ProperSkipList tests', function () {
       beforeEach(async function () {
         skipList = new ProperSkipList();
         for (let i = 999; i >= 3; i--) {
-          skipList.insert(i, `value${i}`);
+          skipList.upsert(i, `value${i}`);
         }
       });
 
@@ -383,7 +383,7 @@ describe('ProperSkipList tests', function () {
       beforeEach(async function () {
         skipList = new ProperSkipList();
         for (let i = 7; i < 107; i++) {
-          skipList.insert(i, `value${i}`);
+          skipList.upsert(i, `value${i}`);
         }
       });
 
@@ -430,7 +430,7 @@ describe('ProperSkipList tests', function () {
       beforeEach(async function () {
         skipList = new ProperSkipList();
         for (let i = 10; i < 1000; i += 10) {
-          skipList.insert(i, `value${i}`);
+          skipList.upsert(i, `value${i}`);
         }
       });
 
@@ -469,7 +469,7 @@ describe('ProperSkipList tests', function () {
       beforeEach(async function () {
         skipList = new ProperSkipList();
         for (let i = 10; i < 1000; i += 10) {
-          skipList.insert(`key${i}`, `value${i}`);
+          skipList.upsert(`key${i}`, `value${i}`);
         }
       });
 
@@ -507,7 +507,7 @@ describe('ProperSkipList tests', function () {
     beforeEach(async function () {
       skipList = new ProperSkipList();
       for (let i = 4; i < 100; i++) {
-        skipList.insert(i, `value${i}`);
+        skipList.upsert(i, `value${i}`);
       }
     });
 
@@ -532,7 +532,7 @@ describe('ProperSkipList tests', function () {
     beforeEach(async function () {
       skipList = new ProperSkipList();
       for (let i = 4; i < 100; i++) {
-        skipList.insert(i, `value${i}`);
+        skipList.upsert(i, `value${i}`);
       }
     });
 
@@ -561,7 +561,7 @@ describe('ProperSkipList tests', function () {
         skipList = new ProperSkipList();
         keyLookup = {};
         for (let i = 0; i < 50; i++) {
-          skipList.insert(i, `value${i}`);
+          skipList.upsert(i, `value${i}`);
           keyLookup[i] = true;
         }
       });
@@ -728,7 +728,7 @@ describe('ProperSkipList tests', function () {
         keyLookup = {};
         for (let i = 0; i < 50; i++) {
           let key = `key${i}`;
-          skipList.insert(key, `value${i}`);
+          skipList.upsert(key, `value${i}`);
           keyLookup[key] = true;
         }
       });
@@ -794,12 +794,12 @@ describe('ProperSkipList tests', function () {
         numberKeyLookup = {};
         stringKeyLookup = {};
         for (let i = 0; i < 50; i++) {
-          skipList.insert(i, `value${i}`);
+          skipList.upsert(i, `value${i}`);
           numberKeyLookup[i] = true;
         }
         for (let i = 0; i < 50; i++) {
           let key = `key${i}`;
-          skipList.insert(key, `value${i}`);
+          skipList.upsert(key, `value${i}`);
           stringKeyLookup[key] = true;
         }
       });
@@ -840,14 +840,14 @@ describe('ProperSkipList tests', function () {
     beforeEach(async function () {
       skipList = new ProperSkipList();
       for (let i = 0; i < 50; i++) {
-        skipList.insert(i, `value${i}`);
+        skipList.upsert(i, `value${i}`);
       }
     });
 
     it('should continue working after clear is called', async function () {
       skipList.clear();
       for (let i = 0; i < 50; i++) {
-        skipList.insert(i, `value${i}`);
+        skipList.upsert(i, `value${i}`);
       }
       result = skipList.find(10);
       assert(result === 'value10');
@@ -859,21 +859,21 @@ describe('ProperSkipList tests', function () {
       beforeEach(async function () {
         skipList = new ProperSkipList();
         for (let i = 0; i < 50; i++) {
-          skipList.insert(i, `value${i}`);
+          skipList.upsert(i, `value${i}`);
         }
       });
 
       it('should show the correct number of entries after elements are inserted', async function () {
         assert(skipList.length === 50);
-        skipList.insert('hello', 1);
+        skipList.upsert('hello', 1);
         assert(skipList.length === 51);
-        skipList.insert('foo', 'bar');
+        skipList.upsert('foo', 'bar');
         assert(skipList.length === 52);
-        skipList.insert(null, 'bar');
+        skipList.upsert(null, 'bar');
         assert(skipList.length === 53);
-        skipList.insert('foo', 'two');
+        skipList.upsert('foo', 'two');
         assert(skipList.length === 53);
-        skipList.insert(null, 'test');
+        skipList.upsert(null, 'test');
         assert(skipList.length === 53);
       });
 
@@ -909,7 +909,7 @@ describe('ProperSkipList tests', function () {
           updateLength: false
         });
         for (let i = 0; i < 50; i++) {
-          skipList.insert(i, `value${i}`);
+          skipList.upsert(i, `value${i}`);
         }
       });
 

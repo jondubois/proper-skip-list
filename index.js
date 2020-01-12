@@ -42,7 +42,7 @@ class ProperSkipList {
     this.length = this.updateLength ? 0 : undefined;
   }
 
-  insert(key, value) {
+  upsert(key, value) {
     let {matchingNode, prevNode, searchPath} = this._searchAndTrack(key);
     if (matchingNode) {
       let previousValue = matchingNode.group.value;
