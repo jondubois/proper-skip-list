@@ -151,7 +151,6 @@ class ProperSkipList {
     let layerIndex = this.head.nodes.length - 1;
     let currentNode = this.head.nodes[layerIndex];
     let prevNode = currentNode;
-
     while (true) {
       let currentNodeGroup = currentNode.group;
       let currentKey = currentNodeGroup.key;
@@ -259,6 +258,11 @@ class ProperSkipList {
     let {prevNode: toNode, searchPath: rightSearchPath, matchingNode: matchingRightNode} = this._searchAndTrack(toKey);
     let leftNode = matchingLeftNode ? matchingLeftNode : fromNode;
     let rightNode = matchingRightNode ? matchingRightNode : toNode.next;
+
+    if (leftNode === rightNode) {
+      this._extractNode(leftNode);
+      return;
+    }
 
     if (this.updateLength) {
       let currentNode = leftNode;

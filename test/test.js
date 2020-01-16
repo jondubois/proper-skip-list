@@ -703,6 +703,13 @@ describe('ProperSkipList tests', function () {
         });
       });
 
+      it('should be able to delete a single entry in the middle of the list', async function () {
+        skipList.deleteRange(10, 10, true, true);
+
+        let entries = [...skipList.findEntriesFromMin()];
+        assert(entries.length === 49);
+      });
+
       it('should be able to remove an entire range of entries in a single operation even if there are no exact matches for the left and right bounds', async function () {
         skipList.deleteRange(10.5, 19.5);
 
