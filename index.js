@@ -1,7 +1,6 @@
 const DEFAULT_STACK_UP_PROBABILITY = 0.25;
 
 class ProperSkipList {
-
   constructor(options) {
     options = options || {};
     this.stackUpProbability = options.stackUpProbability || DEFAULT_STACK_UP_PROBABILITY;
@@ -254,13 +253,18 @@ class ProperSkipList {
       toKey = this.maxKey();
       deleteRight = true;
     }
+    if (this._isAGreaterThanB(fromKey, toKey)) {
+      return;
+    }
     let {prevNode: fromNode, searchPath: leftSearchPath, matchingNode: matchingLeftNode} = this._searchAndTrack(fromKey);
     let {prevNode: toNode, searchPath: rightSearchPath, matchingNode: matchingRightNode} = this._searchAndTrack(toKey);
     let leftNode = matchingLeftNode ? matchingLeftNode : fromNode;
     let rightNode = matchingRightNode ? matchingRightNode : toNode.next;
 
     if (leftNode === rightNode) {
-      this._extractNode(leftNode);
+      if (deleteLeft) {
+        this._extractNode(leftNode);
+      }
       return;
     }
 

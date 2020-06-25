@@ -631,6 +631,28 @@ describe('ProperSkipList tests', function () {
         }
       });
 
+      it('should delete nothing if range finds a single item and deleteLeft is not true', async function () {
+        skipList.deleteRange(47, 47);
+        assert(skipList.find(47) === 'value47');
+      });
+
+      it('should delete item if range finds a single item and deleteLeft is true', async function () {
+        skipList.deleteRange(47, 47, true);
+        assert(skipList.find(47) === undefined);
+      });
+
+      it('should delete nothing if left bound is greater than right bound', async function () {
+        skipList.deleteRange(1, 0);
+        assert(skipList.find(0) === 'value0');
+        assert(skipList.find(1) === 'value1');
+      });
+
+      it('should delete nothing if left bound is greater than right bound even if deleteLeft is true and deleteRight is true', async function () {
+        skipList.deleteRange(1, 0, true, true);
+        assert(skipList.find(0) === 'value0');
+        assert(skipList.find(1) === 'value1');
+      });
+
       it('should be able to remove an entire range of entries in a single operation but keep both the left and right bounds', async function () {
         skipList.deleteRange(10, 20);
 
