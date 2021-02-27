@@ -181,7 +181,23 @@ describe('ProperSkipList tests', function () {
       assert(bottomLayer[6][0] === '4');
       assert(bottomLayer[7][0] === 'hello');
       assert(bottomLayer[8][0] === 'test');
+    });
 
+    it('should support mixing Number and BigInt as keys in sorted order', async function () {
+      skipList.upsert(0, `value0`);
+      skipList.upsert(1, `value1`);
+      skipList.upsert(2, `value2`);
+      skipList.upsert(3n, `value3`);
+      skipList.upsert(4, `value4`);
+      skipList.upsert(5n, `value5`);
+      skipList.upsert(6n, `value6`);
+      skipList.upsert(7, `value7`);
+      let currentNode = skipList.head.nodes[0].next;
+      while (currentNode && currentNode.next) {
+        assert(currentNode.group.value === `value${currentNode.group.key.toString()}`);
+        assert(currentNode.prev.group.key === undefined || Number(currentNode.group.key) > Number(currentNode.prev.group.key));
+        currentNode = currentNode.next;
+      }
     });
   });
 

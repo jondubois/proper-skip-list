@@ -112,7 +112,12 @@ class ProperSkipList {
     if (typeA === typeB) {
       return a > b;
     }
-    return this.typePriorityMap[typeA] > this.typePriorityMap[typeB];
+    let typeAPriority = this.typePriorityMap[typeA];
+    let typeBPriority = this.typePriorityMap[typeB];
+    if (typeAPriority === typeBPriority) {
+      return a > b;
+    }
+    return typeAPriority > typeBPriority;
   }
 
   // The two search methods are similar but were separated for performance reasons.
