@@ -45,6 +45,20 @@ function logLayerEntries(skipList) {
   }
 }
 
+function countEntriesFromMin(skipList, limit) {
+  // Walks the bottom layer with a hard cap so that a corrupted (cyclic) list
+  // reports null instead of looping forever.
+  let count = 0;
+  let currentNode = skipList.head.nodes[0].next;
+  while (currentNode && !currentNode.group.isTail) {
+    if (++count > limit) {
+      return null;
+    }
+    currentNode = currentNode.next;
+  }
+  return count;
+}
+
 describe('ProperSkipList tests', function () {
   let skipList;
   let result;
@@ -970,6 +984,192 @@ describe('ProperSkipList tests', function () {
         skipList.clear();
         assert(skipList.length === undefined);
       });
+    });
+  });
+  describe('#keyValidation', function () {
+    beforeEach(async function () {
+      skipList = new ProperSkipList();
+    });
+
+    it('should throw when a key of an unsupported type is used', async function () {
+      let unsupportedKeys = [Symbol('key'), function () {}, {}, [], NaN];
+      for (let key of unsupportedKeys) {
+        for (let method of ['upsert', 'find', 'has', 'extract', 'delete', 'findEntries']) {
+          let error = null;
+          try {
+            skipList[method](key, 'value');
+          } catch (err) {
+            error = err;
+          }
+          assert(error != null, `${method} should have thrown for key of type ${typeof key}`);
+          assert(error.name === 'TypeError');
+        }
+      }
+      // Rejected keys must not leave anything behind in the list.
+      assert(skipList.length === 0);
+      assert(countEntriesFromMin(skipList, 100) === 0);
+    });
+
+    it('should continue to support null, undefined, number, bigint and string keys', async function () {
+      let supportedKeys = [undefined, null, 3, 10n, Infinity, -Infinity, 'hello'];
+      for (let key of supportedKeys) {
+        skipList.upsert(key, `value-${String(key)}`);
+      }
+      assert(skipList.length === supportedKeys.length);
+      for (let key of supportedKeys) {
+        assert(skipList.find(key) === `value-${String(key)}`);
+        assert(skipList.has(key) === true);
+      }
+    });
+
+    it('should cast boolean keys to strings', async function () {
+      skipList.upsert(true, 'valuetrue');
+      skipList.upsert(false, 'valuefalse');
+      assert(skipList.length === 2);
+
+      // The casted key is what gets stored.
+      let layers = getLayerEntries(skipList);
+      let bottomLayer = layers[0];
+      assert(bottomLayer[1][0] === 'false');
+      assert(bottomLayer[2][0] === 'true');
+
+      // Booleans and their string equivalents refer to the same entry.
+      assert(skipList.find(true) === 'valuetrue');
+      assert(skipList.find('true') === 'valuetrue');
+      assert(skipList.find(false) === 'valuefalse');
+      assert(skipList.find('false') === 'valuefalse');
+      assert(skipList.has(true) === true);
+      assert(skipList.has(false) === true);
+
+      skipList.upsert('true', 'replaced');
+      assert(skipList.length === 2);
+      assert(skipList.find(true) === 'replaced');
+
+      assert(skipList.extract(true) === 'replaced');
+      assert(skipList.length === 1);
+      assert(skipList.delete(false) === true);
+      assert(skipList.length === 0);
+      assert(skipList.delete(true) === false);
+    });
+
+    it('should order boolean keys alongside other keys', async function () {
+      skipList.upsert(10, 'number10');
+      skipList.upsert(true, 'valuetrue');
+      skipList.upsert(false, 'valuefalse');
+      skipList.upsert('apple', 'valueapple');
+      skipList.upsert('zebra', 'valuezebra');
+
+      let keys = [];
+      for (let [key] of skipList.findEntriesFromMin()) {
+        keys.push(key);
+      }
+      // Numbers first, then strings in lexicographic order.
+      assert(JSON.stringify(keys) === JSON.stringify([10, 'apple', 'false', 'true', 'zebra']));
+    });
+
+    it('should support boolean keys as deleteRange bounds', async function () {
+      skipList.upsert('a', 'valuea');
+      skipList.upsert(false, 'valuefalse');
+      skipList.upsert('g', 'valueg');
+      skipList.upsert(true, 'valuetrue');
+      skipList.upsert('z', 'valuez');
+      skipList.deleteRange(false, true, true, true);
+      let keys = [];
+      for (let [key] of skipList.findEntriesFromMin()) {
+        keys.push(key);
+      }
+      assert(JSON.stringify(keys) === JSON.stringify(['a', 'z']));
+      assert(skipList.length === 2);
+    });
+
+    it('should not retain entries which cannot be found or deleted', async function () {
+      // A key which cannot be ordered would otherwise be inserted repeatedly
+      // without ever being findable or removable.
+      for (let i = 0; i < 100; i++) {
+        try {
+          skipList.upsert(NaN, `value${i}`);
+        } catch (error) {}
+      }
+      assert(skipList.length === 0);
+      assert(countEntriesFromMin(skipList, 200) === 0);
+      skipList.upsert(1, 'one');
+      assert(skipList.delete(1) === true);
+      assert(skipList.length === 0);
+    });
+
+    it('should not allow deleteRange to corrupt the list when given an unorderable bound', async function () {
+      for (let attempt = 0; attempt < 100; attempt++) {
+        skipList = new ProperSkipList();
+        skipList.upsert(1, 'a');
+        for (let value of ['b', 'c', 'd']) {
+          try {
+            skipList.upsert(NaN, value);
+          } catch (error) {}
+        }
+        try {
+          skipList.deleteRange(1, NaN, true, true);
+        } catch (error) {}
+        // The bottom layer must remain acyclic and consistent with length.
+        let count = countEntriesFromMin(skipList, 200);
+        assert(count !== null, 'the skip list contains a cycle');
+        assert(count === skipList.length);
+      }
+    });
+  });
+
+  describe('#stackUpProbability', function () {
+    it('should throw when the stackUpProbability option is out of range', async function () {
+      for (let stackUpProbability of [1, 1.5, 0, -0.5, Infinity, NaN, 'abc', {}]) {
+        let error = null;
+        try {
+          new ProperSkipList({stackUpProbability});
+        } catch (err) {
+          error = err;
+        }
+        assert(error != null, `should have thrown for stackUpProbability ${String(stackUpProbability)}`);
+        assert(error.name === 'TypeError');
+      }
+    });
+
+    it('should accept valid stackUpProbability values', async function () {
+      for (let stackUpProbability of [0.1, 0.25, 0.5, 0.99]) {
+        skipList = new ProperSkipList({stackUpProbability});
+        assert(skipList.stackUpProbability === stackUpProbability);
+        for (let i = 0; i < 100; i++) {
+          skipList.upsert(i, `value${i}`);
+        }
+        assert(skipList.length === 100);
+        assert(skipList.find(50) === 'value50');
+      }
+    });
+  });
+
+  describe('#has and #delete with falsy values', function () {
+    beforeEach(async function () {
+      skipList = new ProperSkipList();
+    });
+
+    it('should report that a key exists even if its value is falsy', async function () {
+      let falsyValues = [0, false, '', null, undefined, NaN, 0n];
+      // Note: these are values, not keys, so booleans are not casted here.
+      for (let [i, value] of falsyValues.entries()) {
+        skipList.upsert(`key${i}`, value);
+      }
+      for (let i = 0; i < falsyValues.length; i++) {
+        assert(skipList.has(`key${i}`) === true, `has should be true for key${i}`);
+      }
+      assert(skipList.has('missing') === false);
+    });
+
+    it('should report a successful deletion even if the stored value is undefined', async function () {
+      skipList.upsert('key1', undefined);
+      assert(skipList.length === 1);
+      assert(skipList.delete('key1') === true);
+      assert(skipList.length === 0);
+      assert(skipList.delete('key1') === false);
+      skipList.upsert('key2', false);
+      assert(skipList.delete('key2') === true);
+      assert(skipList.length === 0);
     });
   });
 });

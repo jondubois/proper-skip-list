@@ -1,9 +1,22 @@
 const DEFAULT_STACK_UP_PROBABILITY = 0.25;
+const SUPPORTED_KEYS_MESSAGE = 'only undefined, null, number, bigint, string and boolean keys are supported';
 
 class ProperSkipList {
   constructor(options) {
     options = options || {};
-    this.stackUpProbability = options.stackUpProbability || DEFAULT_STACK_UP_PROBABILITY;
+    this.stackUpProbability = options.stackUpProbability == null ?
+      DEFAULT_STACK_UP_PROBABILITY : options.stackUpProbability;
+    // A probability of 1 or more would make the stack up loop in upsert run
+    // forever since Math.random() always returns a value which is less than 1.
+    if (
+      typeof this.stackUpProbability !== 'number' ||
+      !(this.stackUpProbability > 0) ||
+      this.stackUpProbability >= 1
+    ) {
+      throw new TypeError(
+        'The stackUpProbability option must be a number greater than 0 and less than 1'
+      );
+    }
     this.updateLength = options.updateLength !== false;
     this.typePriorityMap = {
       'undefined': 0,
@@ -42,6 +55,7 @@ class ProperSkipList {
   }
 
   upsert(key, value) {
+    key = this._normalizeKey(key);
     let {matchingNode, prevNode, searchPath} = this._searchAndTrack(key);
     if (matchingNode) {
       let previousValue = matchingNode.group.value;
@@ -103,7 +117,42 @@ class ProperSkipList {
   }
 
   has(key) {
-    return !!this.find(key);
+    let {matchingNode} = this._search(key);
+    return !!matchingNode;
+  }
+
+  // Returns the key to use internally; throws if the key cannot be ordered.
+  // It is idempotent so it is safe to apply more than once per operation.
+  _normalizeKey(key) {
+    let type = typeof key;
+    if (type === 'boolean') {
+      // Booleans are cast to strings so that they can be ordered; this means
+      // that true and 'true' refer to the same entry.
+      return String(key);
+    }
+    if (type === 'object') {
+      // null is ordered as an object but any other object would have to be
+      // compared via its valueOf/toString methods.
+      if (key !== null) {
+        throw new TypeError(
+          `The specified key was an object; ${SUPPORTED_KEYS_MESSAGE}`
+        );
+      }
+      return key;
+    }
+    if (this.typePriorityMap[type] === undefined) {
+      throw new TypeError(
+        `The specified key was of type ${type}; ${SUPPORTED_KEYS_MESSAGE}`
+      );
+    }
+    // NaN is a number but it does not compare as greater than, less than or
+    // equal to anything, including itself.
+    if (type === 'number' && key !== key) {
+      throw new TypeError(
+        `The specified key was NaN which cannot be ordered; ${SUPPORTED_KEYS_MESSAGE}`
+      );
+    }
+    return key;
   }
 
   _isAGreaterThanB(a, b) {
@@ -122,6 +171,7 @@ class ProperSkipList {
 
   // The two search methods are similar but were separated for performance reasons.
   _searchAndTrack(key) {
+    key = this._normalizeKey(key);
     let layerCount = this.head.nodes.length;
     let searchPath = new Array(layerCount);
     let layerIndex = layerCount - 1;
@@ -152,6 +202,7 @@ class ProperSkipList {
   }
 
   _search(key) {
+    key = this._normalizeKey(key);
     let layerIndex = this.head.nodes.length - 1;
     let currentNode = this.head.nodes[layerIndex];
     let prevNode = currentNode;
@@ -230,7 +281,12 @@ class ProperSkipList {
   }
 
   delete(key) {
-    return this.extract(key) !== undefined;
+    let {matchingNode} = this._search(key);
+    if (matchingNode) {
+      this._extractNode(matchingNode);
+      return true;
+    }
+    return false;
   }
 
   findEntries(fromKey) {
@@ -258,6 +314,8 @@ class ProperSkipList {
       toKey = this.maxKey();
       deleteRight = true;
     }
+    fromKey = this._normalizeKey(fromKey);
+    toKey = this._normalizeKey(toKey);
     if (this._isAGreaterThanB(fromKey, toKey)) {
       return;
     }

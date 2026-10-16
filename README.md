@@ -45,6 +45,14 @@ The `stackUpProbability` option can be modified to optimize space usage and perf
 Keys can be of type `string` and/or `number`. Internally, different types are handled separately. All numbers have priority over strings.
 If strings are used, the order is lexicographic.
 
+`undefined`, `null` and `bigint` keys are also supported; they are ordered as `undefined` < `null` < `number`/`bigint` < `string`.
+
+`boolean` keys are supported but are cast to strings, so `true` and `'true'` refer to the same entry (likewise `false` and `'false'`),
+and they are ordered among the other string keys.
+
+Any other key will cause a `TypeError` to be thrown. This includes `symbol` and `function` keys, objects other than `null`, and `NaN` -
+none of these can be placed in a consistent order, so inserting them would produce entries which could never be found or deleted again.
+
 ### Constructor
 
 ```js
@@ -63,15 +71,17 @@ let skipList = new ProperSkipList({
 ```
 
 - The `stackUpProbability` option is the probability of an entry stacking up a single level when it is inserted into the skip list.
+  It must be a number greater than 0 and less than 1, otherwise a `TypeError` will be thrown; a probability of 1 or more would make
+  `upsert` stack up entries forever.
 - The `updateLength` option allows you to disable the `length` property of the skip list. Not updating the `length` of the skip list can make the `deleteRange` method faster for certain use cases which involve deleting large segments of the skip list in a single operation.
 
 ### Methods
 
 - **`upsert(key, value)`**: Insert a value into the skip list at the specified key. If a value already exists at that key, it will be replaced.
 - **`find(key)`**: Get the value stored at the specified key. This method returns `undefined` if a matching value is not found.
-- **`has(key)`**: Check if an entry with the specified key exists.
+- **`has(key)`**: Check if an entry with the specified key exists. This is based on the presence of the key, so it returns `true` even if the value stored at that key is falsy.
 - **`extract(key)`**: Remove a value at the specified key if it exits. This method returns the value or `undefined` if not found.
-- **`delete(key)`**: Remove a value at the specified key if it exits. This method returns a boolean to indicate whether or not a value existed at that key.
+- **`delete(key)`**: Remove a value at the specified key if it exits. This method returns a boolean to indicate whether or not an entry existed at that key; it returns `true` even if the value which was removed was `undefined`.
 - **`findEntries(fromKey)`**: Get iterators for entries starting at the specified key in ascending or descending order. The `fromKey` does not need to have an exact match in the list; this method can therefore be used to iterate over nearby keys. The return value is an object in the form `{matchingValue, asc, desc}`. If an exact match for `fromKey` was found, the `matchingValue` property will contain the value at that key, otherwise it will be `undefined`. The `asc` property is an `iterable` iterator which can be used to iterate over records in ascending order starting at `fromKey` (or the next highest value if no exact match is found). The `desc` property is an `iterable` iterator which can be used to iterate over records in descending order starting at `fromKey` (or the next lowest value if no exact match is found).
 - **`findEntriesFromMin()`**: Iterate over entries in ascending order starting at the lowest key. This method returns an iterable iterator.
 - **`findEntriesFromMax()`**: Iterate over entries in descending order starting at the highest key. This method returns an iterable iterator.
